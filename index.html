@@ -423,6 +423,161 @@ body{
 }
 .chunk-add-btn:hover{background:rgba(74,124,95,0.18);}
 
+/* ── WIZARD ────────────────────────────────────────────────────────────── */
+.wiz-screen{max-width:480px;margin:0 auto;padding:0 0 100px;}
+.wiz-header{
+  background:var(--ink);padding:20px 20px 16px;
+  position:sticky;top:0;z-index:10;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.wiz-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--cream);}
+.wiz-logo em{color:var(--rust2);font-style:italic;}
+.wiz-skip{font-size:11px;color:rgba(255,255,255,0.4);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;padding:6px 0;}
+.wiz-skip:hover{color:rgba(255,255,255,0.7);}
+.wiz-progress{height:3px;background:var(--warm2);}
+.wiz-progress-fill{height:100%;background:var(--rust);transition:width 0.4s ease;}
+.wiz-body{padding:28px 20px 20px;}
+.wiz-eyebrow{font-size:10px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--slate);margin-bottom:12px;}
+.wiz-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);line-height:1.2;margin-bottom:8px;}
+.wiz-title em{color:var(--rust2);font-style:italic;}
+.wiz-sub{font-size:13px;color:var(--slate);font-weight:300;line-height:1.6;margin-bottom:24px;}
+
+/* Mission questions */
+.wiz-question{margin-bottom:20px;}
+.wiz-question label{display:block;font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--slate);margin-bottom:6px;}
+.wiz-question textarea{
+  width:100%;border:1.5px solid var(--warm2);border-radius:var(--r2);
+  padding:12px 14px;font-family:'DM Serif Display',serif;font-size:16px;
+  color:var(--ink);background:var(--card);outline:none;resize:none;
+  min-height:72px;line-height:1.4;
+}
+.wiz-question textarea:focus{border-color:var(--rust2);background:#fff;}
+.wiz-question textarea::placeholder{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--slate2);}
+
+/* Why statement preview */
+.wiz-why-preview{
+  background:var(--ink);border-radius:var(--r);padding:18px 20px;
+  margin-bottom:20px;border-left:3px solid var(--rust2);
+}
+.wiz-why-label{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;}
+.wiz-why-text{font-family:'DM Serif Display',serif;font-size:16px;color:var(--cream);line-height:1.4;font-style:italic;}
+
+/* Room selection */
+.wiz-room-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.wiz-room-tile{
+  background:var(--card);border:1.5px solid var(--border);border-radius:var(--r2);
+  padding:12px 10px;cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;gap:8px;position:relative;
+}
+.wiz-room-tile.excluded{opacity:0.35;background:var(--warm);}
+.wiz-room-tile:hover:not(.excluded){border-color:var(--rust2);}
+.wiz-room-icon{font-size:18px;flex-shrink:0;}
+.wiz-room-name{font-size:12px;font-weight:500;color:var(--ink);flex:1;line-height:1.3;}
+.wiz-room-remove{
+  position:absolute;top:6px;right:6px;
+  width:18px;height:18px;border-radius:50%;
+  background:rgba(184,92,58,0.15);color:var(--rust);
+  border:none;font-size:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity 0.15s;line-height:1;
+}
+.wiz-room-tile:hover .wiz-room-remove{opacity:1;}
+.wiz-room-tile.excluded .wiz-room-remove{opacity:1;background:rgba(74,124,95,0.15);color:var(--green);}
+
+/* Room diagnostic card */
+.wiz-room-card{
+  background:var(--card);border-radius:var(--r);
+  border:1px solid var(--border);box-shadow:0 2px 8px var(--shadow);
+  margin-bottom:16px;overflow:hidden;
+}
+.wiz-room-card-header{
+  background:var(--ink2);padding:14px 18px;
+  display:flex;align-items:center;gap:10px;
+}
+.wiz-room-card-header .room-icon{font-size:20px;}
+.wiz-room-card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--cream);}
+.wiz-room-card-sub{font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;}
+.wiz-chips{padding:12px 16px;background:rgba(184,92,58,0.05);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;}
+.wiz-chip{
+  font-size:11px;color:var(--rust3);background:rgba(184,92,58,0.1);
+  border-radius:20px;padding:4px 10px;cursor:pointer;
+  transition:background 0.15s;border:none;font-family:'DM Sans',sans-serif;
+}
+.wiz-chip:hover{background:rgba(184,92,58,0.2);}
+.wiz-textarea{
+  width:100%;border:none;border-bottom:1px solid var(--border);
+  padding:14px 18px;font-family:'DM Sans',sans-serif;font-size:13px;
+  color:var(--ink);background:var(--card);outline:none;resize:none;
+  min-height:80px;line-height:1.55;font-weight:300;
+}
+.wiz-textarea::placeholder{color:var(--slate2);}
+.wiz-room-actions{padding:12px 16px;display:flex;gap:8px;}
+.wiz-btn-analyse{
+  flex:1;background:var(--rust);color:white;border:none;border-radius:var(--r2);
+  padding:11px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
+  transition:background 0.15s;
+}
+.wiz-btn-analyse:hover{background:var(--rust2);}
+.wiz-btn-analyse:disabled{opacity:0.5;cursor:not-allowed;}
+.wiz-btn-skip{
+  background:var(--warm2);color:var(--slate);border:none;border-radius:var(--r2);
+  padding:11px 16px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;
+}
+
+/* Template job preview */
+.wiz-template-jobs{padding:10px 16px;background:rgba(74,124,95,0.04);border-bottom:1px solid var(--border);}
+.wiz-template-label{font-size:10px;color:var(--green3);font-weight:500;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+.wiz-template-item{font-size:12px;color:var(--slate);padding:3px 0;display:flex;align-items:center;gap:6px;}
+.wiz-template-item::before{content:'✓';color:var(--green2);font-size:11px;flex-shrink:0;}
+
+/* Extracted jobs */
+.wiz-extracted{padding:12px 16px 16px;border-top:1px solid var(--border);}
+.wiz-extracted-label{font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:10px;}
+.wiz-job-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--warm2);}
+.wiz-job-row:last-of-type{border-bottom:none;}
+.wiz-job-input{flex:1;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);font-weight:300;outline:none;padding:2px 0;}
+.wiz-job-input:focus{background:var(--warm);padding:2px 6px;border-radius:4px;}
+.wiz-job-freq{border:1px solid var(--warm2);border-radius:6px;padding:3px 6px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--slate);background:var(--warm);outline:none;cursor:pointer;flex-shrink:0;}
+.wiz-job-del{background:none;border:none;color:var(--warm2);cursor:pointer;font-size:16px;padding:2px 4px;transition:color 0.15s;flex-shrink:0;}
+.wiz-job-del:hover{color:var(--rust);}
+.wiz-add-row{display:flex;gap:6px;margin-top:8px;}
+.wiz-add-input{flex:1;border:1px dashed var(--warm2);border-radius:6px;padding:7px 10px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink);background:none;outline:none;}
+.wiz-add-input:focus{border-color:var(--rust2);border-style:solid;}
+.wiz-add-btn{background:none;border:1px dashed var(--warm2);border-radius:6px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--slate);transition:all 0.15s;}
+.wiz-add-btn:hover{border-color:var(--green);color:var(--green);}
+.wiz-spinner{width:14px;height:14px;border:2px solid var(--warm2);border-top-color:var(--rust);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;margin-right:8px;}
+.wiz-loading{display:flex;align-items:center;padding:14px 0;color:var(--slate);font-size:13px;font-weight:300;}
+
+/* Summary */
+.wiz-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.wiz-summary-card{background:var(--card);border-radius:var(--r2);padding:14px;border:1px solid var(--border);text-align:center;}
+.wiz-summary-num{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);}
+.wiz-summary-lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--slate);margin-top:2px;}
+.wiz-room-summary{background:var(--card);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.wiz-room-summary-name{font-size:13px;color:var(--ink);font-weight:400;}
+.wiz-room-summary-count{font-size:12px;color:var(--slate);}
+
+/* Nav/footer */
+.wiz-nav{padding:16px 20px;display:flex;gap:10px;position:sticky;bottom:0;background:var(--cream);border-top:1px solid var(--border);}
+.wiz-btn-next{flex:1;background:var(--rust);color:white;border:none;border-radius:var(--r2);padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:background 0.15s;}
+.wiz-btn-next:hover{background:var(--rust2);}
+.wiz-btn-back{background:var(--warm2);color:var(--slate);border:none;border-radius:var(--r2);padding:14px 18px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;}
+.wiz-btn-pause{background:none;border:1px solid var(--warm2);color:var(--slate);border-radius:var(--r2);padding:14px 14px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;}
+
+/* Room pip strip */
+.wiz-pip-strip{display:flex;gap:4px;padding:10px 20px;background:var(--ink2);overflow-x:auto;scrollbar-width:none;}
+.wiz-pip-strip::-webkit-scrollbar{display:none;}
+.wiz-pip{flex-shrink:0;font-size:9px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;padding:4px 8px;border-radius:20px;color:rgba(255,255,255,0.35);background:rgba(255,255,255,0.06);cursor:pointer;white-space:nowrap;transition:all 0.2s;border:none;font-family:'DM Sans',sans-serif;}
+.wiz-pip.active{background:var(--rust);color:white;}
+.wiz-pip.done{background:var(--green);color:white;}
+
+/* Welcome screen */
+.wiz-welcome-feature{background:var(--card);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;}
+.wiz-welcome-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.wiz-welcome-title{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;}
+.wiz-welcome-desc{font-size:12px;color:var(--slate);font-weight:300;line-height:1.5;}
+
 /* DONE TOAST */
 .toast{
   position:fixed;bottom:80px;left:50%;
@@ -576,6 +731,9 @@ body{
   <div class="editor-job-list" id="editor-job-list"></div>
   <div id="editor-form-wrap"></div>
 
+  <div class="section-label" style="margin-top:28px;">Setup</div>
+  <button class="export-btn" style="background:rgba(184,92,58,0.1);color:var(--rust);border-color:rgba(184,92,58,0.3);" onclick="launchWizard()">↺ Re-run setup wizard</button>
+
   <div class="section-label" style="margin-top:28px;">Account</div>
   <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;">
     <div style="font-size:11px;color:var(--slate);margin-bottom:4px;">Signed in as</div>
@@ -595,6 +753,9 @@ body{
   <button class="editor-reset-job" onclick="reScatter()" style="width:100%;margin-bottom:8px;">↺ Re-scatter all job dates (use if everything still shows as due)</button>
   <button class="editor-reset-job" onclick="resetAllData()" style="width:100%;color:#B03030;border-color:#E8C0C0;">⚠ Reset all data — start fresh</button>
 </div>
+
+<!-- WIZARD OVERLAY -->
+<div id="wizard-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:500;overflow-y:auto;"></div>
 
 <!-- ASSIGN MODAL -->
 <div class="modal-overlay" id="assign-modal">
@@ -1969,37 +2130,57 @@ document.getElementById('nav-date').textContent = now.toLocaleDateString('en-GB'
 // ── INIT ───────────────────────────────────────────────────────────────────
 async function boot(){
   if(!userKey){
-    // First time — show key setup screen
     showKeySetup();
     return;
   }
 
-  // Show app immediately from local cache (feels instant)
+  // Show app immediately from local cache
   initState();
   renderDispatch();
 
-  // Then sync from Supabase in background
+  // Show why statement on dispatch if set
+  if(state.whyStatement) renderWhyBar();
+
+  // Sync from Supabase in background
   try{
     const cloudState = await sbLoad(userKey);
     if(cloudState){
       state = cloudState;
       saveLocalState();
       supabaseSynced = true;
-      // Re-render with fresh cloud data
       initState();
       renderDispatch();
-      // Subtle indicator
-      const dot = document.getElementById('nav-date');
-      if(dot) dot.title = 'Synced with cloud ✓';
+      if(state.whyStatement) renderWhyBar();
     } else {
-      // No cloud data yet — upload local state
       await sbSave(userKey, state);
       supabaseSynced = true;
     }
+    setSyncDot('synced');
   } catch(e){
-    // Offline or error — local cache is fine, carry on
     console.warn('Supabase sync failed, using local cache:', e);
   }
+
+  // Launch wizard if never completed
+  if(!state.wizardDone){
+    setTimeout(()=>launchWizard(), 400);
+  }
+}
+
+function renderWhyBar(){
+  const existing = document.getElementById('why-bar');
+  if(existing) existing.remove();
+  if(!state.whyStatement) return;
+  const bar = document.createElement('div');
+  bar.id = 'why-bar';
+  bar.style.cssText = `
+    background:var(--ink2);padding:10px 20px;
+    font-family:'DM Serif Display',serif;font-size:13px;
+    color:rgba(255,255,255,0.55);font-style:italic;line-height:1.4;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  `;
+  bar.textContent = state.whyStatement;
+  const panel = document.getElementById('tab-dispatch');
+  if(panel) panel.insertBefore(bar, panel.firstChild);
 }
 
 function initState(){
@@ -2046,7 +2227,568 @@ function initState(){
   }
 }
 
-// ── EXPOSE GLOBALS (needed by inline onclick handlers) ─────────────────────
+// ── WIZARD ─────────────────────────────────────────────────────────────────
+const WIZ_ROOMS = [
+  {id:'kitchen',name:'Kitchen',icon:'🍳',room:'Kitchen',
+   prompts:'Look at every surface, cupboard, appliance. What\'s been annoying you silently?',
+   chips:['Cupboards inside','Under the sink','Appliances','Tiles / grout','Sealant','Extractor fan','Fridge seals','Bin area','Worktops','Hob / oven']},
+  {id:'living',name:'Living Room',icon:'🛋️',room:'Living Room',
+   prompts:'Look up, down, behind furniture. Paintwork, skirting, cables, clutter zones.',
+   chips:['Skirting boards','Paintwork','Windows / sills','Behind sofa','Lights','Clutter zones','Cables','Fireplace']},
+  {id:'hallway',name:'Hallway & Stairs',icon:'🚪',room:'Stairs & Landing',
+   prompts:'First impression of your home. Walls, banisters, floors, the clutter that accumulates here.',
+   chips:['Front door area','Shoe clutter','Coat hooks','Banisters','Stair carpet','Wall scuffs','Light fitting','Under stairs']},
+  {id:'main-bed',name:'Main Bedroom',icon:'🛏️',room:'Master Bedroom',
+   prompts:'Your sanctuary — or it should be. Wardrobes inside and out. Under the bed. That chair.',
+   chips:['Under bed','Wardrobe inside','Skirting','Windows','That chair','Paintwork','Curtains / blinds','Ceiling light']},
+  {id:'other-beds',name:'Other Bedrooms',icon:'🛏️',room:'Guest Bedroom',
+   prompts:'Kids\' rooms, spare rooms — honest assessment. What\'s been put off in here?',
+   chips:['Clutter','Under beds','Wardrobes','Paintwork','Windows','Floors','Storage']},
+  {id:'bathroom',name:'Bathroom(s)',icon:'🚿',room:'Bathroom',
+   prompts:'Grout, sealant, caulk — be brutal. Extractor, mirror, storage, taps.',
+   chips:['Grout / sealant','Around bath / shower','Extractor fan','Mirror','Taps / limescale','Cabinet inside','Flooring','Towel rail']},
+  {id:'utility',name:'Utility / Laundry',icon:'🧺',room:'Utility',
+   prompts:'Behind appliances. The chaos shelf. The floor.',
+   chips:['Behind washer / dryer','Sink','Shelving','Airer area','Floor','Cupboards']},
+  {id:'office',name:'Home Office',icon:'💻',room:'Office',
+   prompts:'Cables, shelves, the pile of things with no home.',
+   chips:['Desk surface','Cables','Shelving','Paintwork','Windows','Floor']},
+  {id:'garden',name:'Garden & Outside',icon:'🏡',room:'Garden & Outside',
+   prompts:'Garden, driveway, fences — the forgotten zone.',
+   chips:['Garden tidying','Fences / gates','Driveway','Gutters','Outside lights','Paths']},
+];
+
+let wizState = {
+  stage: 'mission', // mission | rooms-select | rooms-walk | summary | welcome
+  mission: {now:'', want:'', know:''},
+  whyStatement: '',
+  excludedRooms: new Set(),
+  currentRoomIdx: 0,
+  extractedJobs: {}, // roomId -> [{text, freq}]
+  roomsDone: new Set(),
+};
+
+function launchWizard(){
+  const overlay = document.getElementById('wizard-overlay');
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // Reset wizard state but keep any existing mission if re-running
+  wizState.stage = 'mission';
+  wizState.excludedRooms = new Set();
+  wizState.currentRoomIdx = 0;
+  wizState.extractedJobs = {};
+  wizState.roomsDone = new Set();
+  if(state.mission){
+    wizState.mission = {...state.mission};
+    wizState.whyStatement = state.whyStatement || '';
+  }
+  renderWizard();
+}
+
+function closeWizard(){
+  const overlay = document.getElementById('wizard-overlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function pauseWizard(){
+  // Save partial progress to state
+  state.mission = {...wizState.mission};
+  state.whyStatement = wizState.whyStatement;
+  saveState();
+  closeWizard();
+  showToast('Progress saved — continue anytime in Settings');
+}
+
+function renderWizard(){
+  const overlay = document.getElementById('wizard-overlay');
+  const stages = {mission:1, 'rooms-select':2, 'rooms-walk':3, summary:4, welcome:5};
+  const pct = ((stages[wizState.stage]||1)-1) / 4 * 100;
+
+  let content = '';
+  if(wizState.stage==='mission') content = renderWizMission();
+  else if(wizState.stage==='rooms-select') content = renderWizRoomsSelect();
+  else if(wizState.stage==='rooms-walk') content = renderWizRoomsWalk();
+  else if(wizState.stage==='summary') content = renderWizSummary();
+  else if(wizState.stage==='welcome') content = renderWizWelcome();
+
+  overlay.innerHTML = `
+    <div class="wiz-screen">
+      <div class="wiz-header">
+        <div class="wiz-logo"><em>Hearth</em> Setup</div>
+        <button class="wiz-skip" onclick="pauseWizard()">Save & do this later</button>
+      </div>
+      <div class="wiz-progress"><div class="wiz-progress-fill" style="width:${pct}%"></div></div>
+      ${content}
+    </div>
+  `;
+  overlay.scrollTop = 0;
+}
+
+// ── STAGE 1: MISSION ───────────────────────────────────────────────────────
+function renderWizMission(){
+  const m = wizState.mission;
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">Step 1 of 4</div>
+      <h1 class="wiz-title">Start with <em>why</em></h1>
+      <p class="wiz-sub">Before jobs and frequencies, take a moment. The most important thing is knowing what you're doing this for.</p>
+
+      <div class="wiz-question">
+        <label>What does your home feel like right now?</label>
+        <textarea id="wiz-now" placeholder="Chaotic. Overwhelming. Like I'm always behind…" oninput="wizState.mission.now=this.value;updateWizWhy()">${m.now||''}</textarea>
+      </div>
+      <div class="wiz-question">
+        <label>What do you want it to feel like?</label>
+        <textarea id="wiz-want" placeholder="Calm. Under control. A place we actually want to be…" oninput="wizState.mission.want=this.value;updateWizWhy()">${m.want||''}</textarea>
+      </div>
+      <div class="wiz-question">
+        <label>How will you know it's working?</label>
+        <textarea id="wiz-know" placeholder="I'll stop dreading people coming over. The boys will have friends round…" oninput="wizState.mission.know=this.value;updateWizWhy()">${m.know||''}</textarea>
+      </div>
+
+      <div id="wiz-why-preview" style="${wizState.whyStatement?'':'display:none'}">
+        <div class="wiz-why-preview">
+          <div class="wiz-why-label">Your why</div>
+          <div class="wiz-why-text" id="wiz-why-text">${wizState.whyStatement||''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--slate);margin-bottom:20px;line-height:1.5;">This will appear quietly in the app as a reminder. You can edit it any time.</div>
+      </div>
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-next" onclick="wizMissionNext()">Choose your rooms →</button>
+    </div>
+  `;
+}
+
+function updateWizWhy(){
+  const now = wizState.mission.now.trim();
+  const want = wizState.mission.want.trim();
+  const know = wizState.mission.know.trim();
+  if(!now && !want) return;
+  // Build a quiet why statement from what they've said
+  let why = '';
+  if(want) why = `You're doing this so your home feels ${want.replace(/\.$/, '').toLowerCase()}.`;
+  if(know) why += ` You'll know it's working when ${know.replace(/\.$/, '').toLowerCase()}.`;
+  wizState.whyStatement = why;
+  const preview = document.getElementById('wiz-why-preview');
+  const text = document.getElementById('wiz-why-text');
+  if(preview && text){
+    preview.style.display = 'block';
+    text.textContent = why;
+  }
+}
+
+function wizMissionNext(){
+  state.mission = {...wizState.mission};
+  state.whyStatement = wizState.whyStatement;
+  saveState();
+  wizState.stage = 'rooms-select';
+  renderWizard();
+}
+
+// ── STAGE 2: ROOM SELECTION ────────────────────────────────────────────────
+function renderWizRoomsSelect(){
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">Step 2 of 4</div>
+      <h1 class="wiz-title">Your <em>rooms</em></h1>
+      <p class="wiz-sub">Tap the × to remove any rooms you don't have. We'll walk through the rest one by one.</p>
+      <div class="wiz-room-grid">
+        ${WIZ_ROOMS.map(r=>{
+          const excluded = wizState.excludedRooms.has(r.id);
+          return `<div class="wiz-room-tile ${excluded?'excluded':''}" id="wiz-tile-${r.id}">
+            <span class="wiz-room-icon">${r.icon}</span>
+            <span class="wiz-room-name">${r.name}</span>
+            <button class="wiz-room-remove" onclick="toggleWizRoom('${r.id}')" title="${excluded?'Add back':'Remove'}">${excluded?'+':'×'}</button>
+          </div>`;
+        }).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--slate);font-weight:300;">You can always add rooms later in Settings.</p>
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-back" onclick="wizState.stage='mission';renderWizard()">←</button>
+      <button class="wiz-btn-next" onclick="wizRoomsSelectNext()">Start the walkthrough →</button>
+    </div>
+  `;
+}
+
+function toggleWizRoom(id){
+  if(wizState.excludedRooms.has(id)) wizState.excludedRooms.delete(id);
+  else wizState.excludedRooms.add(id);
+  renderWizard();
+}
+
+function wizRoomsSelectNext(){
+  wizState.currentRoomIdx = 0;
+  // Skip to first non-excluded room
+  while(wizState.currentRoomIdx < WIZ_ROOMS.length &&
+        wizState.excludedRooms.has(WIZ_ROOMS[wizState.currentRoomIdx].id)){
+    wizState.currentRoomIdx++;
+  }
+  if(wizState.currentRoomIdx >= WIZ_ROOMS.length){
+    wizState.stage = 'summary';
+  } else {
+    wizState.stage = 'rooms-walk';
+  }
+  renderWizard();
+}
+
+// ── STAGE 3: ROOM WALKTHROUGH ──────────────────────────────────────────────
+function renderWizRoomsWalk(){
+  const activeRooms = WIZ_ROOMS.filter(r=>!wizState.excludedRooms.has(r.id));
+  const room = WIZ_ROOMS[wizState.currentRoomIdx];
+  const doneIdx = activeRooms.indexOf(room);
+  const total = activeRooms.length;
+
+  // Get template jobs for this room
+  const templateJobs = Object.values(state.jobs)
+    .filter(j=>j.room===room.room && j.tier!=='stepchange')
+    .slice(0,5);
+
+  const extracted = wizState.extractedJobs[room.id] || [];
+  const hasExtracted = extracted.length > 0;
+
+  const pips = activeRooms.map((r,i)=>{
+    const isDone = wizState.roomsDone.has(r.id);
+    const isActive = r.id === room.id;
+    return `<button class="wiz-pip ${isDone?'done':isActive?'active':''}">${r.icon} ${r.name}</button>`;
+  }).join('');
+
+  const extractedHtml = hasExtracted ? `
+    <div class="wiz-extracted">
+      <div class="wiz-extracted-label">Jobs found — edit anything</div>
+      <div id="wiz-job-list-${room.id}">
+        ${extracted.map((j,i)=>wizJobRowHTML(room.id,i,j.text,j.freq)).join('')}
+      </div>
+      <div class="wiz-add-row">
+        <input class="wiz-add-input" id="wiz-add-${room.id}" placeholder="Add a job I missed…" onkeydown="if(event.key==='Enter')wizAddJob('${room.id}')">
+        <button class="wiz-add-btn" onclick="wizAddJob('${room.id}')">+</button>
+      </div>
+    </div>` : '';
+
+  return `
+    <div class="wiz-pip-strip">${pips}</div>
+    <div class="wiz-body" style="padding-top:20px;">
+      <div class="wiz-eyebrow">Room ${doneIdx+1} of ${total}</div>
+
+      <div class="wiz-room-card">
+        <div class="wiz-room-card-header">
+          <span class="room-icon">${room.icon}</span>
+          <div>
+            <div class="wiz-room-card-title">${room.name}</div>
+            <div class="wiz-room-card-sub">${room.prompts}</div>
+          </div>
+        </div>
+
+        ${templateJobs.length ? `
+        <div class="wiz-template-jobs">
+          <div class="wiz-template-label">Already in your system</div>
+          ${templateJobs.map(j=>`<div class="wiz-template-item">${j.title}</div>`).join('')}
+          ${Object.values(state.jobs).filter(j=>j.room===room.room&&j.tier!=='stepchange').length > 5
+            ? `<div style="font-size:11px;color:var(--slate2);padding-top:4px;">…and ${Object.values(state.jobs).filter(j=>j.room===room.room&&j.tier!=='stepchange').length - 5} more</div>`
+            : ''}
+          <div style="font-size:11px;color:var(--slate);padding-top:6px;">Add anything specific to your ${room.name.toLowerCase()} below.</div>
+        </div>` : ''}
+
+        <div class="wiz-chips">
+          ${room.chips.map(c=>`<button class="wiz-chip" onclick="wizAppendChip('${room.id}','${c}')">${c}</button>`).join('')}
+        </div>
+
+        <textarea class="wiz-textarea" id="wiz-ta-${room.id}"
+          placeholder="Anything specific to your ${room.name.toLowerCase()}? Tap chips above or just talk…"
+        ></textarea>
+
+        <div class="wiz-room-actions">
+          <button class="wiz-btn-analyse" id="wiz-analyse-${room.id}" onclick="wizAnalyseRoom('${room.id}')">
+            ${hasExtracted ? 'Re-analyse' : 'Find jobs in this room →'}
+          </button>
+          <button class="wiz-btn-skip" onclick="wizSkipRoom()">Skip</button>
+        </div>
+
+        ${hasExtracted ? extractedHtml : '<div id="wiz-extracted-placeholder"></div>'}
+      </div>
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-back" onclick="wizRoomBack()">←</button>
+      <button class="wiz-btn-pause" onclick="pauseWizard()">⏸ Pause</button>
+      <button class="wiz-btn-next" onclick="wizSaveRoom('${room.id}')">${hasExtracted ? 'Save & next →' : 'Skip this room →'}</button>
+    </div>
+  `;
+}
+
+function wizAppendChip(roomId, chip){
+  const ta = document.getElementById(`wiz-ta-${roomId}`);
+  if(ta) { ta.value += (ta.value&&!ta.value.endsWith(' ')?'. ':'')+chip+': '; ta.focus(); }
+}
+
+async function wizAnalyseRoom(roomId){
+  const ta = document.getElementById(`wiz-ta-${roomId}`);
+  const text = (ta ? ta.value.trim() : '');
+  if(text.length < 5){
+    ta.style.border='1.5px solid var(--rust)';
+    setTimeout(()=>ta.style.border='',1200);
+    return;
+  }
+  const room = WIZ_ROOMS.find(r=>r.id===roomId);
+  const btn = document.getElementById(`wiz-analyse-${roomId}`);
+  btn.disabled = true; btn.textContent = 'Analysing…';
+
+  // Show loading in extracted area
+  const placeholder = document.getElementById('wiz-extracted-placeholder') ||
+    document.querySelector('.wiz-extracted');
+  if(placeholder) placeholder.innerHTML = `<div class="wiz-loading"><div class="wiz-spinner"></div>Reading what you said…</div>`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        system:`Extract discrete household cleaning and maintenance jobs from a room description.
+Return ONLY a JSON array, no markdown. Each item: {"text":"short actionable job title under 8 words","freq":"weekly"|"fortnightly"|"monthly"|"quarterly"|"annually"|"one-off"}
+Rules: keep titles short and actionable. Split compound problems. Include everything mentioned. "one-off" for repairs/projects, "weekly" for regular cleaning, scale others sensibly.`,
+        messages:[{role:'user',content:`Room: ${room.name}\n\nDescription: ${text}`}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text||'[]';
+    let jobs;
+    try{ jobs = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch{ jobs=[]; }
+    if(!Array.isArray(jobs)||!jobs.length) jobs=[{text:`Check ${room.name.toLowerCase()} notes`,freq:'monthly'}];
+    wizState.extractedJobs[roomId] = jobs;
+    renderWizard();
+  } catch(err){
+    if(btn){ btn.disabled=false; btn.textContent='Try again'; }
+    showToast('Could not connect — check internet');
+  }
+}
+
+function wizJobRowHTML(roomId, i, text, freq){
+  const freqs = ['daily','weekly','fortnightly','monthly','quarterly','annually','one-off'];
+  return `<div class="wiz-job-row" id="wiz-row-${roomId}-${i}">
+    <input class="wiz-job-input" id="wiz-jt-${roomId}-${i}" value="${text.replace(/"/g,'&quot;')}">
+    <select class="wiz-job-freq" id="wiz-jf-${roomId}-${i}">
+      ${freqs.map(f=>`<option value="${f}" ${freq===f?'selected':''}>${f}</option>`).join('')}
+    </select>
+    <button class="wiz-job-del" onclick="wizDelJob('${roomId}',${i})">×</button>
+  </div>`;
+}
+
+function wizDelJob(roomId, i){
+  const row = document.getElementById(`wiz-row-${roomId}-${i}`);
+  if(row) row.remove();
+}
+
+function wizAddJob(roomId){
+  const inp = document.getElementById(`wiz-add-${roomId}`);
+  if(!inp||!inp.value.trim()) return;
+  const list = document.getElementById(`wiz-job-list-${roomId}`);
+  const idx = Date.now();
+  const div = document.createElement('div');
+  div.innerHTML = wizJobRowHTML(roomId, idx, inp.value.trim(), 'monthly');
+  list.appendChild(div.firstElementChild);
+  inp.value = '';
+}
+
+function wizCollectJobs(roomId){
+  const rows = document.querySelectorAll(`[id^="wiz-row-${roomId}-"]`);
+  const jobs = [];
+  rows.forEach(row=>{
+    const idx = row.id.replace(`wiz-row-${roomId}-`,'');
+    const t = document.getElementById(`wiz-jt-${roomId}-${idx}`);
+    const f = document.getElementById(`wiz-jf-${roomId}-${idx}`);
+    if(t&&t.value.trim()) jobs.push({text:t.value.trim(), freq:f?f.value:'monthly'});
+  });
+  return jobs;
+}
+
+function wizSaveRoom(roomId){
+  // Collect any edited jobs
+  if(wizState.extractedJobs[roomId]){
+    wizState.extractedJobs[roomId] = wizCollectJobs(roomId);
+  }
+  wizState.roomsDone.add(roomId);
+  wizNextRoom();
+}
+
+function wizSkipRoom(){
+  wizNextRoom();
+}
+
+function wizNextRoom(){
+  wizState.currentRoomIdx++;
+  while(wizState.currentRoomIdx < WIZ_ROOMS.length &&
+        wizState.excludedRooms.has(WIZ_ROOMS[wizState.currentRoomIdx].id)){
+    wizState.currentRoomIdx++;
+  }
+  if(wizState.currentRoomIdx >= WIZ_ROOMS.length){
+    wizState.stage = 'summary';
+  }
+  renderWizard();
+}
+
+function wizRoomBack(){
+  if(wizState.currentRoomIdx === 0){
+    wizState.stage = 'rooms-select';
+    renderWizard();
+    return;
+  }
+  wizState.currentRoomIdx--;
+  while(wizState.currentRoomIdx > 0 &&
+        wizState.excludedRooms.has(WIZ_ROOMS[wizState.currentRoomIdx].id)){
+    wizState.currentRoomIdx--;
+  }
+  renderWizard();
+}
+
+// ── STAGE 4: SUMMARY ───────────────────────────────────────────────────────
+function renderWizSummary(){
+  const allNewJobs = Object.values(wizState.extractedJobs).flat();
+  const byRoom = WIZ_ROOMS.filter(r=>wizState.extractedJobs[r.id]&&wizState.extractedJobs[r.id].length);
+  const totalExisting = Object.values(state.jobs).filter(j=>j.tier!=='stepchange').length;
+
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">Step 4 of 4</div>
+      <h1 class="wiz-title">Almost <em>there</em></h1>
+      <p class="wiz-sub">Here's what we found. These will be added to your existing job list.</p>
+
+      <div class="wiz-summary-grid">
+        <div class="wiz-summary-card">
+          <div class="wiz-summary-num">${allNewJobs.length}</div>
+          <div class="wiz-summary-lbl">New jobs found</div>
+        </div>
+        <div class="wiz-summary-card">
+          <div class="wiz-summary-num">${totalExisting}</div>
+          <div class="wiz-summary-lbl">Already in system</div>
+        </div>
+      </div>
+
+      ${byRoom.length ? byRoom.map(r=>`
+        <div class="wiz-room-summary">
+          <span class="wiz-room-summary-name">${r.icon} ${r.name}</span>
+          <span class="wiz-room-summary-count">${wizState.extractedJobs[r.id].length} job${wizState.extractedJobs[r.id].length!==1?'s':''}</span>
+        </div>`).join('') : `<div style="text-align:center;padding:20px;color:var(--slate);font-size:13px;">No new jobs were added — your existing list is your starting point.</div>`}
+
+      ${wizState.whyStatement ? `
+        <div class="wiz-why-preview" style="margin-top:20px;">
+          <div class="wiz-why-label">Your why</div>
+          <div class="wiz-why-text">${wizState.whyStatement}</div>
+        </div>` : ''}
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-back" onclick="wizState.stage='rooms-walk';wizState.currentRoomIdx=0;renderWizard()">← Back</button>
+      <button class="wiz-btn-next" onclick="wizConfirm()">Add to Hearth →</button>
+    </div>
+  `;
+}
+
+function wizConfirm(){
+  // Merge extracted jobs into state.jobs
+  const FREQ_MAP = {
+    'daily':'daily','weekly':'weekly','fortnightly':'fortnightly',
+    'monthly':'monthly','quarterly':'quarterly','annually':'annually','one-off':'one-off'
+  };
+  const TIER_MAP = {
+    'daily':'micro','weekly':'micro','fortnightly':'micro',
+    'monthly':'small','quarterly':'small','annually':'large','one-off':'large'
+  };
+  let added = 0;
+  WIZ_ROOMS.forEach(wr=>{
+    const jobs = wizState.extractedJobs[wr.id]||[];
+    jobs.forEach((j,i)=>{
+      if(!j.text.trim()) return;
+      const id = `wiz_${wr.id}_${Date.now()}_${i}`;
+      const freq = FREQ_MAP[j.freq]||'monthly';
+      state.jobs[id] = {
+        id, title:j.text, room:wr.room, tier:TIER_MAP[freq]||'small',
+        freq, mins:30, notes:'', equip:[],
+        last_done:null, assigned_to:'me', reset_count:0,
+        status:'active', assigned_date:null, chunks:[],
+      };
+      added++;
+    });
+  });
+  // Save mission
+  state.mission = {...wizState.mission};
+  state.whyStatement = wizState.whyStatement;
+  state.wizardDone = true;
+  saveState();
+  wizState.stage = 'welcome';
+  renderWizard();
+}
+
+// ── STAGE 5: WELCOME ───────────────────────────────────────────────────────
+function renderWizWelcome(){
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">You're all set</div>
+      <h1 class="wiz-title">Welcome to <em>Hearth</em></h1>
+      <p class="wiz-sub" style="margin-bottom:24px;">Here's how it works. You don't need to remember all of this — the app guides you.</p>
+
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">📋</div>
+        <div>
+          <div class="wiz-welcome-title">Dispatch</div>
+          <div class="wiz-welcome-desc">Your daily view. Shows what's due, prioritised by how overdue it is. Tap "Not now" to skip, "Roulette me" to see something different.</div>
+        </div>
+      </div>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">🎲</div>
+        <div>
+          <div class="wiz-welcome-title">Roulette</div>
+          <div class="wiz-welcome-desc">Pick how long you've got and spin. Good for when you just want to do something without thinking about what.</div>
+        </div>
+      </div>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">▶</div>
+        <div>
+          <div class="wiz-welcome-title">Do a bit</div>
+          <div class="wiz-welcome-desc">Big jobs are split into 20-minute parts. Tap "Do a bit" to tick off one part and make progress without committing to the whole thing.</div>
+        </div>
+      </div>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">💡</div>
+        <div>
+          <div class="wiz-welcome-title">Step Change</div>
+          <div class="wiz-welcome-desc">Decisions that unlock everything else. One per fortnight — small thinking that creates permanent improvements.</div>
+        </div>
+      </div>
+
+      ${wizState.whyStatement ? `
+        <div class="wiz-why-preview" style="margin-top:20px;">
+          <div class="wiz-why-label">Keep this in mind</div>
+          <div class="wiz-why-text">${wizState.whyStatement}</div>
+        </div>` : ''}
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-next" onclick="closeWizard();renderDispatch();">Go to Hearth →</button>
+    </div>
+  `;
+}
+
+// ── EXPOSE WIZARD GLOBALS ──────────────────────────────────────────────────
+window.launchWizard = launchWizard;
+window.closeWizard = closeWizard;
+window.pauseWizard = pauseWizard;
+window.renderWizard = renderWizard;
+window.wizMissionNext = wizMissionNext;
+window.updateWizWhy = updateWizWhy;
+window.toggleWizRoom = toggleWizRoom;
+window.wizRoomsSelectNext = wizRoomsSelectNext;
+window.wizAppendChip = wizAppendChip;
+window.wizAnalyseRoom = wizAnalyseRoom;
+window.wizDelJob = wizDelJob;
+window.wizAddJob = wizAddJob;
+window.wizSaveRoom = wizSaveRoom;
+window.wizSkipRoom = wizSkipRoom;
+window.wizNextRoom = wizNextRoom;
+window.wizRoomBack = wizRoomBack;
+window.wizConfirm = wizConfirm;
+
 window.showTab = showTab;
 window.setTime = setTime;
 window.setRouletteMode = setRouletteMode;
@@ -2080,6 +2822,7 @@ window.reScatter = reScatter;
 window.resetAllData = resetAllData;
 window.switchAccount = switchAccount;
 window.confirmUserKey = confirmUserKey;
+window.renderWhyBar = renderWhyBar;
 
 boot();
 })();
