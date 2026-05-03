@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hearth</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1C1812;--ink2:#2A2318;--ink3:#3D3428;
+  --cream:#F7F3ED;--warm:#EDE6D9;--warm2:#E2D9C8;
+  --rust:#B85C3A;--rust2:#D4785A;--rust3:#8A3F24;
+  --gold:#C49A3C;--gold2:#C49A3C;
+  --green:#4A7C5F;--green2:#6B9E7E;--green3:#2E5C42;
+  --slate:#7A6A55;--slate2:#9A8A75;
+  --card:#FFFFFF;
+  --bg:var(--cream);
+  --surface:var(--warm);
+  --border:rgba(28,24,18,0.10);
+  --text:var(--ink);--text2:var(--slate);
+  --shadow:rgba(28,24,18,0.10);
+  --r:12px;--r2:8px;
+}
+html{height:100%;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--cream);
+  color:var(--ink);
+  min-height:100vh;
+  max-width:480px;
+  margin:0 auto;
+  position:relative;
+}
+
+/* NAV */
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 12px;
+  position:sticky;top:0;z-index:100;
+  background:var(--ink);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.nav-logo{
+  font-family:'DM Serif Display',serif;
+  font-size:22px;color:var(--cream);letter-spacing:0.01em;
+}
+.nav-logo em{color:var(--rust2);font-style:italic;}
+.nav-date{font-size:11px;color:rgba(255,255,255,0.45);font-weight:300;letter-spacing:0.05em;}
+
+/* TAB BAR */
+.tabbar{
+  display:flex;
+  background:var(--ink2);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  position:sticky;top:57px;z-index:99;
+}
+.tab-btn{
+  flex:1;padding:11px 4px;
+  font-family:'DM Sans',sans-serif;
+  font-size:10px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:rgba(255,255,255,0.4);background:none;border:none;
+  cursor:pointer;transition:color 0.2s;
+  border-bottom:2px solid transparent;
+}
+.tab-btn.active{color:var(--cream);border-bottom-color:var(--rust2);}
+.tab-btn:hover:not(.active){color:var(--cream);}
+
+/* PANELS */
+.panel{display:none;padding:20px 16px 100px;background:var(--cream);}
+.panel.active{display:block;}
+
+/* SECTION LABEL */
+.section-label{
+  font-size:10px;font-weight:500;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--slate);
+  margin:20px 0 10px;display:flex;align-items:center;gap:8px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--warm2);}
+
+/* DISPATCH CARD */
+.dispatch-card{
+  background:var(--card);border-radius:var(--r);
+  border:1px solid var(--border);
+  box-shadow:0 2px 8px var(--shadow);
+  overflow:hidden;margin-bottom:12px;
+  animation:cardIn 0.3s ease;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+.card-header{
+  padding:16px 18px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;gap:10px;
+}
+.card-room{
+  font-size:10px;font-weight:500;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--slate);
+  margin-bottom:5px;
+}
+.card-title{
+  font-family:'DM Serif Display',serif;
+  font-size:22px;color:var(--ink);line-height:1.15;
+  flex:1;
+}
+.tier-badge{
+  font-size:10px;font-weight:500;padding:3px 9px;
+  border-radius:20px;white-space:nowrap;flex-shrink:0;margin-top:3px;
+}
+.t-micro{background:rgba(74,124,95,0.15);color:#2E5C42;}
+.t-small{background:rgba(196,154,60,0.15);color:#8A6820;}
+.t-large{background:rgba(184,92,58,0.15);color:#8A3F24;}
+.t-major{background:rgba(160,64,64,0.15);color:#7A2020;}
+.t-stepchange{background:rgba(130,100,200,0.15);color:#4A3A8A;}
+
+.card-meta{
+  padding:12px 18px;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  border-bottom:1px solid var(--border);
+  background:var(--warm);
+}
+.meta-item{display:flex;flex-direction:column;gap:2px;}
+.meta-label{font-size:10px;color:var(--slate);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;}
+.meta-value{font-size:13px;color:var(--ink);font-weight:400;}
+.meta-value.overdue{color:#B03030;}
+.meta-value.due-soon{color:#8A6820;}
+
+.card-notes{
+  padding:12px 18px;
+  font-size:13px;color:var(--slate);
+  font-weight:300;line-height:1.55;
+  border-bottom:1px solid var(--border);
+}
+.card-equipment{
+  padding:10px 18px;
+  display:flex;gap:6px;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);
+}
+.equip-tag{
+  font-size:11px;color:#8A6820;
+  background:rgba(196,154,60,0.12);
+  border-radius:20px;padding:3px 9px;
+}
+
+.reset-flag{
+  padding:8px 18px;
+  font-size:11px;color:#B03030;
+  background:rgba(160,64,64,0.08);
+  display:flex;align-items:center;gap:6px;
+}
+.reset-flag::before{content:'↺';font-size:13px;}
+
+.card-actions{
+  padding:14px 18px;
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.card-actions-row2{
+  padding:0 18px 14px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
+}
+.btn{
+  border:none;border-radius:var(--r2);
+  padding:11px 10px;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.15s;
+  text-align:center;
+}
+.btn:active{transform:scale(0.97);}
+.btn-done{background:var(--green);color:white;}
+.btn-done:hover{background:var(--green2);}
+.btn-roulette{background:var(--rust);color:white;}
+.btn-roulette:hover{background:var(--rust2);}
+.btn-later{background:var(--warm2);color:var(--ink);}
+.btn-later:hover{background:var(--warm);}
+.btn-assign{background:rgba(196,154,60,0.15);color:#8A6820;}
+.btn-assign:hover{background:rgba(196,154,60,0.25);}
+.btn-small{font-size:11px;padding:9px 8px;}
+
+/* EMPTY STATE */
+.empty-state{
+  text-align:center;padding:60px 20px;
+  color:var(--slate);
+}
+.empty-state .big{
+  font-family:'DM Serif Display',serif;
+  font-size:32px;color:var(--green);
+  margin-bottom:10px;
+}
+.empty-state p{font-size:13px;font-weight:300;line-height:1.6;}
+
+/* STATS BAR */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  margin-bottom:16px;
+}
+.stat-card{
+  background:var(--card);border-radius:var(--r2);
+  padding:10px 8px;text-align:center;
+  border:1px solid var(--border);
+  box-shadow:0 1px 4px var(--shadow);
+}
+.stat-num{font-size:20px;font-weight:500;color:var(--ink);}
+.stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--slate);margin-top:2px;}
+
+/* MODE SWITCHER */
+.mode-bar{
+  display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;
+}
+.mode-btn{
+  flex:1;min-width:80px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r2);padding:9px 6px;
+  font-family:'DM Sans',sans-serif;font-size:11px;
+  font-weight:500;letter-spacing:0.05em;
+  color:var(--slate);cursor:pointer;
+  transition:all 0.15s;text-align:center;
+}
+.mode-btn.active{background:var(--rust);border-color:var(--rust);color:white;}
+.mode-btn:hover:not(.active){background:var(--warm);color:var(--ink);}
+
+/* TIME FILTER */
+.time-filter{display:flex;gap:6px;margin-bottom:16px;}
+.time-btn{
+  flex:1;background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r2);padding:8px 4px;
+  font-family:'DM Sans',sans-serif;font-size:11px;
+  font-weight:500;color:var(--slate);cursor:pointer;
+  transition:all 0.15s;text-align:center;
+}
+.time-btn.active{background:var(--gold);border-color:var(--gold);color:white;}
+.time-btn:hover:not(.active){background:var(--warm);color:var(--ink);}
+
+/* ROOM GRID */
+.room-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.room-card{
+  background:var(--card);border-radius:var(--r2);
+  padding:14px 12px;
+  border:1px solid var(--border);
+  box-shadow:0 1px 4px var(--shadow);
+  cursor:pointer;transition:all 0.15s;
+}
+.room-card:hover{border-color:var(--rust2);background:var(--warm);}
+.room-card.selected{border-color:var(--rust);background:var(--warm);}
+.room-name{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:4px;}
+.room-count{font-size:11px;color:var(--slate);}
+.room-due{font-size:11px;color:var(--rust);}
+
+/* ASSIGNED */
+.assigned-card{
+  background:var(--card);border-radius:var(--r2);
+  padding:14px 16px;margin-bottom:8px;
+  border:1px solid var(--border);
+  box-shadow:0 1px 4px var(--shadow);
+  display:flex;align-items:flex-start;gap:10px;
+}
+.assigned-person{
+  font-size:10px;font-weight:500;letter-spacing:0.08em;
+  text-transform:uppercase;padding:3px 8px;
+  border-radius:12px;white-space:nowrap;
+  flex-shrink:0;margin-top:2px;
+}
+.p-nick{background:rgba(196,154,60,0.15);color:#8A6820;}
+.p-boys{background:rgba(130,100,200,0.15);color:#4A3A8A;}
+.assigned-info{flex:1;}
+.assigned-title{font-size:14px;color:var(--ink);font-weight:400;margin-bottom:3px;}
+.assigned-room{font-size:11px;color:var(--slate);}
+.assigned-age{font-size:11px;color:var(--rust);margin-top:3px;}
+.assigned-actions{display:flex;gap:6px;margin-top:10px;}
+.btn-tiny{
+  font-size:11px;padding:5px 10px;border-radius:20px;
+  border:none;cursor:pointer;font-family:'DM Sans',sans-serif;
+  font-weight:500;transition:all 0.15s;
+}
+.btn-takeback{background:var(--warm2);color:var(--ink);}
+.btn-markedone{background:rgba(74,124,95,0.15);color:#2E5C42;}
+.btn-nudge{background:rgba(196,154,60,0.15);color:#8A6820;}
+
+/* STEP CHANGE */
+.stepchange-card{
+  background:linear-gradient(135deg,rgba(130,100,200,0.08),rgba(100,70,170,0.04));
+  border:1px solid rgba(130,100,200,0.2);
+  border-radius:var(--r);padding:20px 18px;margin-bottom:12px;
+}
+.sc-eyebrow{
+  font-size:10px;font-weight:500;letter-spacing:0.1em;
+  text-transform:uppercase;color:#4A3A8A;margin-bottom:8px;
+}
+.sc-title{
+  font-family:'DM Serif Display',serif;
+  font-size:20px;color:var(--ink);line-height:1.2;margin-bottom:8px;
+}
+.sc-note{font-size:13px;color:var(--slate);font-weight:300;line-height:1.55;margin-bottom:14px;}
+.sc-actions{display:flex;gap:8px;}
+.btn-sc-done{background:rgba(130,100,200,0.15);color:#4A3A8A;border-radius:var(--r2);padding:9px 16px;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-sc-snooze{background:var(--warm2);color:var(--slate);border-radius:var(--r2);padding:9px 16px;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* ASSIGN MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:200;display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal{
+  background:var(--cream);border-radius:var(--r) var(--r) 0 0;
+  padding:20px 20px 40px;width:100%;
+  transform:translateY(100%);transition:transform 0.3s ease;
+  border-top:1px solid var(--border);
+  box-shadow:0 -4px 20px rgba(28,24,18,0.15);
+}
+.modal-overlay.show .modal{transform:translateY(0);}
+.modal-title{
+  font-family:'DM Serif Display',serif;
+  font-size:20px;color:var(--ink);margin-bottom:6px;
+}
+.modal-job{font-size:13px;color:var(--slate);margin-bottom:18px;font-weight:300;}
+.assign-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.assign-opt{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:14px;text-align:center;
+  cursor:pointer;transition:all 0.15s;
+  box-shadow:0 1px 4px var(--shadow);
+}
+.assign-opt:hover{background:var(--warm);border-color:var(--rust2);}
+.assign-opt-name{font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px;}
+.assign-opt-note{font-size:11px;color:var(--slate);}
+.modal-cancel{
+  width:100%;padding:12px;background:none;border:1px solid var(--border);
+  border-radius:var(--r2);color:var(--slate);font-family:'DM Sans',sans-serif;
+  font-size:13px;cursor:pointer;
+}
+
+/* DONE TOAST */
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--green);color:white;
+  border-radius:24px;padding:10px 20px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:all 0.3s;
+  pointer-events:none;white-space:nowrap;z-index:300;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* EXPORT */
+.export-btn{
+  width:100%;margin-top:8px;
+  background:rgba(196,154,60,0.12);color:#8A6820;
+  border:1px solid rgba(196,154,60,0.3);
+  border-radius:var(--r2);padding:12px;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.15s;
+}
+.export-btn:hover{background:rgba(196,154,60,0.2);}
+.import-row{display:flex;gap:8px;margin-top:8px;}
+
+/* JOB EDITOR */
+.editor-search{
+  width:100%;border:1.5px solid var(--warm2);border-radius:var(--r2);
+  padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;
+  background:var(--card);color:var(--ink);outline:none;margin-bottom:12px;
+}
+.editor-search:focus{border-color:var(--rust2);}
+.editor-job-list{max-height:260px;overflow-y:auto;margin-bottom:16px;}
+.editor-job-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r2);padding:11px 14px;margin-bottom:6px;
+  cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.editor-job-item:hover{border-color:var(--rust2);background:var(--warm);}
+.editor-job-item.selected{border-color:var(--rust);background:var(--warm);}
+.editor-job-name{font-size:13px;color:var(--ink);font-weight:400;}
+.editor-job-room{font-size:11px;color:var(--slate);margin-top:2px;}
+.editor-form{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;
+  box-shadow:0 2px 8px var(--shadow);
+}
+.editor-form label{
+  display:block;font-size:10px;font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--slate);margin-bottom:4px;margin-top:12px;
+}
+.editor-form label:first-child{margin-top:0;}
+.editor-form input,.editor-form select,.editor-form textarea{
+  width:100%;border:1.5px solid var(--warm2);border-radius:var(--r2);
+  padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:13px;
+  background:var(--cream);color:var(--ink);outline:none;
+}
+.editor-form input:focus,.editor-form select:focus,.editor-form textarea:focus{border-color:var(--rust2);}
+.editor-form textarea{min-height:70px;resize:vertical;}
+.editor-save{
+  width:100%;margin-top:14px;
+  background:var(--rust);color:white;border:none;
+  border-radius:var(--r2);padding:12px;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:background 0.15s;
+}
+.editor-save:hover{background:var(--rust2);}
+.editor-reset-job{
+  width:100%;margin-top:8px;
+  background:none;color:var(--slate);border:1px solid var(--warm2);
+  border-radius:var(--r2);padding:10px;
+  font-family:'DM Sans',sans-serif;font-size:12px;
+  cursor:pointer;transition:all 0.15s;
+}
+.editor-reset-job:hover{border-color:var(--rust);color:var(--rust);}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-logo"><em>Hearth</em></div>
+  <div class="nav-date" id="nav-date"></div>
+</div>
+
+<div class="tabbar">
+  <button class="tab-btn active" onclick="showTab('dispatch')">Dispatch</button>
+  <button class="tab-btn" onclick="showTab('roulette')">Roulette</button>
+  <button class="tab-btn" onclick="showTab('rooms')">Rooms</button>
+  <button class="tab-btn" onclick="showTab('assigned')">Assigned</button>
+  <button class="tab-btn" onclick="showTab('stepchange')">Step Change</button>
+  <button class="tab-btn" onclick="showTab('settings')">Settings</button>
+</div>
+
+<!-- DISPATCH -->
+<div id="tab-dispatch" class="panel active">
+  <div class="stats-bar" id="stats-bar"></div>
+  <div id="dispatch-content"></div>
+</div>
+
+<!-- ROULETTE -->
+<div id="tab-roulette" class="panel">
+  <div class="section-label">How long have you got?</div>
+  <div class="time-filter">
+    <button class="time-btn active" onclick="setTime(30,this)">Under 30m</button>
+    <button class="time-btn" onclick="setTime(60,this)">Under 1hr</button>
+    <button class="time-btn" onclick="setTime(180,this)">1–3 hrs</button>
+    <button class="time-btn" onclick="setTime(999,this)">Project</button>
+  </div>
+  <div class="mode-bar">
+    <button class="mode-btn active" onclick="setRouletteMode('any',this)">Any room</button>
+    <button class="mode-btn" onclick="setRouletteMode('room',this)">This room</button>
+  </div>
+  <div id="roulette-room-select" style="display:none;margin-bottom:12px;">
+    <select id="roulette-room-picker" style="width:100%;background:var(--ink2);color:var(--cream);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r2);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;">
+    </select>
+  </div>
+  <div id="roulette-content"></div>
+  <button class="btn btn-roulette" style="width:100%;margin-top:8px;padding:14px;" onclick="spinRoulette()">Spin the wheel</button>
+</div>
+
+<!-- ROOMS -->
+<div id="tab-rooms" class="panel">
+  <div class="room-grid" id="room-grid"></div>
+  <div id="room-jobs-content"></div>
+</div>
+
+<!-- ASSIGNED -->
+<div id="tab-assigned" class="panel">
+  <div class="section-label">Nick</div>
+  <div id="assigned-nick"></div>
+  <div class="section-label">The boys</div>
+  <div id="assigned-boys"></div>
+</div>
+
+<!-- STEP CHANGE -->
+<div id="tab-stepchange" class="panel">
+  <div class="section-label">This fortnight — one thought</div>
+  <div id="stepchange-content"></div>
+  <div class="section-label">Upcoming</div>
+  <div id="stepchange-upcoming"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="panel">
+  <div class="section-label">Edit a job</div>
+  <input class="editor-search" id="editor-search" placeholder="Search jobs…" oninput="filterEditorJobs()" autocomplete="off">
+  <div class="editor-job-list" id="editor-job-list"></div>
+  <div id="editor-form-wrap"></div>
+
+  <div class="section-label" style="margin-top:28px;">Data</div>
+  <button class="export-btn" onclick="exportData()">↓ Export backup to Files / iCloud</button>
+  <div class="import-row">
+    <label style="flex:1;background:var(--warm);border:1px solid var(--border);border-radius:var(--r2);padding:11px 14px;font-size:13px;color:var(--slate);cursor:pointer;text-align:center;">
+      ↑ Restore from backup
+      <input type="file" accept=".json" style="display:none" onchange="importData(event)">
+    </label>
+  </div>
+  <div class="section-label" style="margin-top:28px;">Reset</div>
+  <button class="editor-reset-job" onclick="reScatter()" style="width:100%;margin-bottom:8px;">↺ Re-scatter all job dates (use if everything still shows as due)</button>
+  <button class="editor-reset-job" onclick="resetAllData()" style="width:100%;color:#B03030;border-color:#E8C0C0;">⚠ Reset all data — start fresh</button>
+</div>
+
+<!-- ASSIGN MODAL -->
+<div class="modal-overlay" id="assign-modal">
+  <div class="modal">
+    <div class="modal-title">Assign this job</div>
+    <div class="modal-job" id="modal-job-title"></div>
+    <div class="assign-options">
+      <div class="assign-opt" onclick="confirmAssign('Nick')">
+        <div class="assign-opt-name">Nick</div>
+        <div class="assign-opt-note">Bins, ironing & more</div>
+      </div>
+      <div class="assign-opt" onclick="confirmAssign('Boys')">
+        <div class="assign-opt-name">The boys</div>
+        <div class="assign-opt-note">Their rooms & bathroom</div>
+      </div>
+    </div>
+    <button class="modal-cancel" onclick="closeAssignModal()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── FREQUENCIES ────────────────────────────────────────────────────────────
+const FREQ_DAYS = {
+  'daily':1,'2-3x week':3,'weekly':7,'fortnightly':14,
+  'monthly':30,'quarterly':91,'annually':365,'one-off':0,'seasonal':90,'as needed':0
+};
+
+// ── JOB DATA ───────────────────────────────────────────────────────────────
+const JOB_TEMPLATES = [
+// KITCHEN
+{id:'k01',title:'Wipe cupboard doors',room:'Kitchen',tier:'micro',freq:'weekly',mins:10,notes:'Constant greasy fingerprints — damp cloth with degreaser.',equip:[]},
+{id:'k02',title:'Wipe worktops properly',room:'Kitchen',tier:'micro',freq:'weekly',mins:15,notes:'Clear everything off first, spray, wipe, replace only what belongs.',equip:[]},
+{id:'k03',title:'Clean dishwasher door & rims',room:'Kitchen',tier:'micro',freq:'fortnightly',mins:10,notes:'Cloth + detergent around the seal and outer rim.',equip:[]},
+{id:'k04',title:'Clean microwave inside',room:'Kitchen',tier:'micro',freq:'fortnightly',mins:10,notes:'Bowl of water on high 5 mins, then wipe — steam loosens everything.',equip:['Hand steamer']},
+{id:'k05',title:'Clear & wipe top of microwave',room:'Kitchen',tier:'micro',freq:'weekly',mins:5,notes:'Declutter the tray, wipe surface.',equip:[]},
+{id:'k06',title:'Clean bin inside & out',room:'Kitchen',tier:'micro',freq:'monthly',mins:10,notes:'Spray inside, rinse, dry before new bag.',equip:[]},
+{id:'k07',title:'Wipe bin area floor & wall',room:'Kitchen',tier:'micro',freq:'monthly',mins:10,notes:'Behind and around the bin — grease and drips accumulate here.',equip:[]},
+{id:'k08',title:'Clean toaster — fingerprints & crumbs',room:'Kitchen',tier:'micro',freq:'fortnightly',mins:10,notes:'Unplug, pull crumb tray, wipe exterior with damp cloth.',equip:[]},
+{id:'k09',title:'Wipe tea & coffee caddies',room:'Kitchen',tier:'micro',freq:'fortnightly',mins:5,notes:'Quick wipe, no faff.',equip:[]},
+{id:'k10',title:'Clear & wipe breakfast bar',room:'Kitchen',tier:'micro',freq:'weekly',mins:10,notes:'Everything off, wipe, edit what goes back.',equip:[]},
+{id:'k11',title:'Clear & wipe windowsill',room:'Kitchen',tier:'micro',freq:'weekly',mins:10,notes:'Move clutter, wipe, decide what stays.',equip:[]},
+{id:'k12',title:'Clean coffee machine',room:'Kitchen',tier:'micro',freq:'weekly',mins:15,notes:'Weekly anchor — descale monthly. Best done early weekday morning.',equip:[]},
+{id:'k13',title:'Wipe hatch area',room:'Kitchen',tier:'micro',freq:'weekly',mins:5,notes:'Clear clutter, wipe surface.',equip:[]},
+{id:'k14',title:'Dust skirting boards',room:'Kitchen',tier:'micro',freq:'fortnightly',mins:10,notes:'Dry pass only — separate from the wash cycle.',equip:[]},
+{id:'k15',title:'Deep clean hob',room:'Kitchen',tier:'small',freq:'quarterly',mins:45,notes:'Burners off, full strip and degrease.',equip:['Hand steamer']},
+{id:'k16',title:'Deep clean deep fat fryer',room:'Kitchen',tier:'small',freq:'quarterly',mins:40,notes:'Full strip, oil change, degrease exterior.',equip:[]},
+{id:'k17',title:'Clean one kitchen cupboard inside',room:'Kitchen',tier:'small',freq:'monthly',mins:30,notes:'One at a time — rotate through all 10. Empty, wipe, edit contents.',equip:[]},
+{id:'k18',title:'Clean one kitchen drawer',room:'Kitchen',tier:'small',freq:'monthly',mins:20,notes:'One at a time — rotate through all 7.',equip:[]},
+{id:'k19',title:'Clear & clean dry storage fridge',room:'Kitchen',tier:'small',freq:'quarterly',mins:30,notes:'Empty, clean inside, edit what goes back.',equip:[]},
+{id:'k20',title:'Bird feeder — clean & refill',room:'Kitchen',tier:'small',freq:'monthly',mins:20,notes:'Proper clean not just refill — outside job.',equip:[]},
+{id:'k21',title:'Rationalise utensils',room:'Kitchen',tier:'small',freq:'annually',mins:30,notes:'Brutal edit — bag surplus for charity.',equip:[]},
+{id:'k22',title:'Wipe kitchen windows inside',room:'Kitchen',tier:'small',freq:'quarterly',mins:30,notes:'Part of windows rotation — max 3 rooms per session.',equip:[]},
+{id:'k23',title:'Deep clean oven',room:'Kitchen',tier:'large',freq:'quarterly',mins:180,notes:'Shelves out, soak overnight if possible, scrub. Allow 2–3 hrs.',equip:['Hand steamer']},
+{id:'k24',title:'Scrub kitchen skirting boards',room:'Kitchen',tier:'small',freq:'monthly',mins:30,notes:'Warm soapy water — old paintwork, damp grime. Full room wash.',equip:[]},
+{id:'k25',title:'Repaint kitchen walls',room:'Kitchen',tier:'major',freq:'annually',mins:999,notes:'Grease-forgiving colour needed. Full prep + prime + paint.',equip:[]},
+{id:'k26',title:'Sand, prime & paint 3 internal doors',room:'Kitchen',tier:'major',freq:'one-off',mins:999,notes:'Utility, kitchen, pantry doors. Batch with house doors day.',equip:[]},
+{id:'k27',title:'Radiator deep clean',room:'Kitchen',tier:'small',freq:'monthly',mins:20,notes:'Between fins — radiator brush or hair dryer trick. Poor condition.',equip:[]},
+{id:'k28',title:'Floor steam clean',room:'Kitchen',tier:'micro',freq:'2-3x week',mins:15,notes:'Bitty lino — floor steamer rather than mop.',equip:['Floor steamer']},
+
+// PORCH
+{id:'p01',title:'Sweep & steam porch floor',room:'Porch',tier:'micro',freq:'2-3x week',mins:10,notes:'Damp grimy area — needs frequent short hits.',equip:['Floor steamer']},
+{id:'p02',title:'Wipe door ledges & window ledge',room:'Porch',tier:'micro',freq:'weekly',mins:5,notes:'Damp cloth, quick circuit.',equip:[]},
+{id:'p03',title:'Clean letterbox inside & out',room:'Porch',tier:'micro',freq:'fortnightly',mins:5,notes:'Draught, dirt, fingerprints.',equip:[]},
+{id:'p04',title:'Dust & wipe light fitting',room:'Porch',tier:'micro',freq:'monthly',mins:5,notes:'Cobwebs and dead insects — grim fast.',equip:[]},
+{id:'p05',title:'Wash front door inside & out',room:'Porch',tier:'micro',freq:'monthly',mins:15,notes:'Bucket, sponge, rinse.',equip:[]},
+{id:'p06',title:'Edit shoes, coats & bags',room:'Porch',tier:'micro',freq:'monthly',mins:15,notes:'Remove anything that does not live here — firm rule.',equip:[]},
+{id:'p07',title:'Install proper shoe / coat storage',room:'Porch',tier:'small',freq:'one-off',mins:60,notes:'The overcrowding is a system problem. A rack, hooks, or basket changes the room.',equip:[]},
+{id:'p08',title:'Repaint porch walls',room:'Porch',tier:'major',freq:'annually',mins:999,notes:'Damp area — needs damp-resistant paint and proper prep.',equip:[]},
+
+// LIVING ROOM
+{id:'lr01',title:'Hoover living room floor',room:'Living Room',tier:'micro',freq:'2-3x week',mins:10,notes:'Part of the hard floors circuit.',equip:['Regular vacuum']},
+{id:'lr02',title:'Fold blankets & clear chairs',room:'Living Room',tier:'micro',freq:'daily',mins:5,notes:'2 mins — anchor to end of evening.',equip:[]},
+{id:'lr03',title:'Clear & wipe coffee table',room:'Living Room',tier:'micro',freq:'weekly',mins:10,notes:'Clutter off first, then wipe including under-shelf.',equip:[]},
+{id:'lr04',title:'Clear & wipe side table',room:'Living Room',tier:'micro',freq:'weekly',mins:5,notes:'Same pass as coffee table.',equip:[]},
+{id:'lr05',title:'Dust bookshelf & contents',room:'Living Room',tier:'micro',freq:'fortnightly',mins:15,notes:'Books out, dust, back in.',equip:[]},
+{id:'lr06',title:'Dust fireplace, hearth & shelf ornaments',room:'Living Room',tier:'micro',freq:'fortnightly',mins:15,notes:'One pass — ornaments off, dust, replace.',equip:[]},
+{id:'lr07',title:'Wipe windowsills',room:'Living Room',tier:'micro',freq:'weekly',mins:10,notes:'Clear clutter first or it will not happen.',equip:[]},
+{id:'lr08',title:'Wipe TV cabinet & dust electrics',room:'Living Room',tier:'micro',freq:'fortnightly',mins:15,notes:'Dry cloth only on electrics — they attract dust fast.',equip:[]},
+{id:'lr09',title:'Clean large mirror',room:'Living Room',tier:'micro',freq:'monthly',mins:10,notes:'Glass spray, streak-free.',equip:[]},
+{id:'lr10',title:'Dust skirting boards',room:'Living Room',tier:'micro',freq:'fortnightly',mins:10,notes:'Dry pass only.',equip:[]},
+{id:'lr11',title:'Wash door frames',room:'Living Room',tier:'micro',freq:'monthly',mins:15,notes:'Handprints and grime build up fast.',equip:[]},
+{id:'lr12',title:'Replace batteries — air freshener & candles',room:'Living Room',tier:'micro',freq:'as needed',mins:5,notes:'Keep spare AAs in one place.',equip:[]},
+{id:'lr13',title:'Treat mould above window',room:'Living Room',tier:'small',freq:'monthly',mins:20,notes:'Spray, treat, touch-up paint patch. Recurring damp fact of this house.',equip:[]},
+{id:'lr14',title:'Declutter dresser drawers',room:'Living Room',tier:'small',freq:'quarterly',mins:30,notes:'Full empty, edit, reorganise.',equip:[]},
+{id:'lr15',title:'Clean Lucas standing light',room:'Living Room',tier:'small',freq:'monthly',mins:20,notes:'Full wipe — base, stem, shade.',equip:[]},
+{id:'lr16',title:'Clean ceiling lampshade',room:'Living Room',tier:'small',freq:'quarterly',mins:20,notes:'Stepladder job — dust then wipe.',equip:[]},
+{id:'lr17',title:'Clean guitar case',room:'Living Room',tier:'small',freq:'quarterly',mins:20,notes:'Wipe exterior, check interior lining.',equip:[]},
+{id:'lr18',title:'Sand & gloss undercoated windowsill',room:'Living Room',tier:'large',freq:'one-off',mins:90,notes:'Already undercoated — batch with bathroom sill.',equip:[]},
+{id:'lr19',title:'Route cables properly',room:'Living Room',tier:'large',freq:'one-off',mins:90,notes:'Constant visual irritant — cable clips or trunking, one session.',equip:[]},
+{id:'lr20',title:'Scrub skirting boards',room:'Living Room',tier:'small',freq:'monthly',mins:30,notes:'Warm soapy water — old paintwork, damp grime.',equip:[]},
+{id:'lr21',title:'Repaint living room walls',room:'Living Room',tier:'major',freq:'annually',mins:999,notes:'Especially around windows where mould recurs.',equip:[]},
+{id:'lr22',title:'Wipe living room windows inside',room:'Living Room',tier:'small',freq:'quarterly',mins:30,notes:'Part of windows rotation — max 3 rooms per session.',equip:[]},
+
+// MASTER BEDROOM
+{id:'mb01',title:'Change bedding',room:'Master Bedroom',tier:'micro',freq:'weekly',mins:20,notes:'Saturday morning anchor — already working, keep it here.',equip:[]},
+{id:'mb02',title:'Hoover bedroom floor',room:'Master Bedroom',tier:'micro',freq:'2-3x week',mins:10,notes:'Part of floors circuit.',equip:['Regular vacuum']},
+{id:'mb03',title:'Clear & wipe windowsill',room:'Master Bedroom',tier:'micro',freq:'weekly',mins:10,notes:'Random objects — nothing lives here.',equip:[]},
+{id:'mb04',title:'Clear & wipe both side lockers',room:'Master Bedroom',tier:'micro',freq:'weekly',mins:10,notes:'Surfaces off, wipe, edit what goes back.',equip:[]},
+{id:'mb05',title:'Dust bed frame & headboard',room:'Master Bedroom',tier:'micro',freq:'fortnightly',mins:10,notes:'Under pillows too — damp house means dust settles fast.',equip:[]},
+{id:'mb06',title:'Dust skirting boards',room:'Master Bedroom',tier:'micro',freq:'fortnightly',mins:10,notes:'Dry pass only.',equip:[]},
+{id:'mb07',title:'Clear & wipe dressers',room:'Master Bedroom',tier:'micro',freq:'fortnightly',mins:15,notes:'Surface clear and dust/wipe.',equip:[]},
+{id:'mb08',title:'Clean mirror',room:'Master Bedroom',tier:'micro',freq:'fortnightly',mins:10,notes:'Once hung — glass spray, streak-free.',equip:[]},
+{id:'mb09',title:'Dust light fixture',room:'Master Bedroom',tier:'micro',freq:'monthly',mins:5,notes:'Dry cloth or duster.',equip:[]},
+{id:'mb10',title:'Clean vent',room:'Master Bedroom',tier:'micro',freq:'monthly',mins:10,notes:'Scrub — damp house means vents fur up fast.',equip:[]},
+{id:'mb11',title:'Clean radiator',room:'Master Bedroom',tier:'micro',freq:'monthly',mins:15,notes:'Between fins — radiator brush or hair dryer trick.',equip:[]},
+{id:'mb12',title:'Empty bin',room:'Master Bedroom',tier:'micro',freq:'weekly',mins:2,notes:'Part of bins circuit.',equip:[]},
+{id:'mb13',title:'Dust & wipe pictures',room:'Master Bedroom',tier:'micro',freq:'monthly',mins:10,notes:'Frames front and top.',equip:[]},
+{id:'mb14',title:'Scrub skirting boards',room:'Master Bedroom',tier:'small',freq:'monthly',mins:30,notes:'Warm soapy water — full room wash.',equip:[]},
+{id:'mb15',title:'Cull dresser drawers',room:'Master Bedroom',tier:'small',freq:'quarterly',mins:45,notes:'Full empty, brutal edit, reorganise.',equip:[]},
+{id:'mb16',title:'Cull side locker drawers',room:'Master Bedroom',tier:'small',freq:'quarterly',mins:30,notes:'One locker per session.',equip:[]},
+{id:'mb17',title:'Wash windows inside & out',room:'Master Bedroom',tier:'small',freq:'quarterly',mins:45,notes:'Part of windows rotation — max 3 rooms per session.',equip:[]},
+{id:'mb18',title:'Reorganise under-bed drawers',room:'Master Bedroom',tier:'large',freq:'quarterly',mins:90,notes:'Better use of the space — proper sort and system.',equip:[]},
+{id:'mb19',title:'Wash & brighten door + door frames',room:'Master Bedroom',tier:'large',freq:'quarterly',mins:60,notes:'Full wash and touch-up paint. Batch with house doors circuit.',equip:[]},
+
+// GUEST BEDROOM
+{id:'gb01',title:'Hoover guest room floor',room:'Guest Bedroom',tier:'micro',freq:'weekly',mins:10,notes:'Part of floors circuit.',equip:['Regular vacuum']},
+{id:'gb02',title:'Dust bookshelf & contents',room:'Guest Bedroom',tier:'micro',freq:'fortnightly',mins:15,notes:'Books out, dust, back in.',equip:[]},
+{id:'gb03',title:'Wipe windowsill',room:'Guest Bedroom',tier:'micro',freq:'fortnightly',mins:5,notes:'Clear first, then wipe.',equip:[]},
+{id:'gb04',title:'Dust all side & bedside tables',room:'Guest Bedroom',tier:'micro',freq:'fortnightly',mins:10,notes:'All three surfaces — quick pass.',equip:[]},
+{id:'gb05',title:'Dust both lamps',room:'Guest Bedroom',tier:'micro',freq:'monthly',mins:5,notes:'Including the lampshade-less one.',equip:[]},
+{id:'gb06',title:'Dust dresser surface',room:'Guest Bedroom',tier:'micro',freq:'fortnightly',mins:10,notes:'Surface clear and wipe.',equip:[]},
+{id:'gb07',title:'Remove & replace moth sacs',room:'Guest Bedroom',tier:'micro',freq:'monthly',mins:5,notes:'Check ceiling corners — replace when spent.',equip:[]},
+{id:'gb08',title:'Clean internal window above door',room:'Guest Bedroom',tier:'small',freq:'quarterly',mins:30,notes:'Awkward access — stepladder, both sides.',equip:[]},
+{id:'gb09',title:'Wash bedroom windows',room:'Guest Bedroom',tier:'small',freq:'quarterly',mins:30,notes:'Part of windows rotation.',equip:[]},
+{id:'gb10',title:'Declutter dresser drawers',room:'Guest Bedroom',tier:'small',freq:'quarterly',mins:30,notes:'Part of house-wide drawer cull.',equip:[]},
+{id:'gb11',title:'Full room declutter & furniture rationalise',room:'Guest Bedroom',tier:'large',freq:'one-off',mins:120,notes:'Too much furniture — sort before the room can be properly maintained.',equip:[]},
+
+// DANS ROOM
+{id:'dr01',title:'Hoover Dan\'s room carpet',room:'Dan\'s Room',tier:'micro',freq:'2-3x week',mins:10,notes:'Carpet — more frequent than hard floors.',equip:['Regular vacuum']},
+{id:'dr02',title:'Dust skirting boards',room:'Dan\'s Room',tier:'micro',freq:'fortnightly',mins:10,notes:'Dry pass only.',equip:[]},
+{id:'dr03',title:'Wipe windowsill',room:'Dan\'s Room',tier:'micro',freq:'fortnightly',mins:5,notes:'Clear first, then wipe.',equip:[]},
+{id:'dr04',title:'Clean mirror',room:'Dan\'s Room',tier:'micro',freq:'monthly',mins:5,notes:'Flakey frame — clean carefully, avoid edges.',equip:[]},
+{id:'dr05',title:'Empty bin',room:'Dan\'s Room',tier:'micro',freq:'weekly',mins:2,notes:'Part of bins circuit.',equip:[]},
+{id:'dr06',title:'Weed baskets of collections',room:'Dan\'s Room',tier:'small',freq:'quarterly',mins:30,notes:'One basket per session — edit ruthlessly, keep what\'s meaningful.',equip:[]},
+{id:'dr07',title:'Tidy & sort desk area',room:'Dan\'s Room',tier:'small',freq:'quarterly',mins:30,notes:'Clear, wipe, organise.',equip:[]},
+{id:'dr08',title:'Scrub skirting boards',room:'Dan\'s Room',tier:'small',freq:'monthly',mins:30,notes:'Warm soapy water — full room wash.',equip:[]},
+{id:'dr09',title:'Scrub vent',room:'Dan\'s Room',tier:'small',freq:'monthly',mins:10,notes:'Damp house — vents fur up fast.',equip:[]},
+{id:'dr10',title:'Deep clean carpet',room:'Dan\'s Room',tier:'large',freq:'quarterly',mins:120,notes:'Carpet shampooer — reset then maintain with steamer little and often.',equip:['Carpet shampooer','Hand steamer']},
+{id:'dr11',title:'Fix, sand & paint wardrobe door',room:'Dan\'s Room',tier:'large',freq:'one-off',mins:120,notes:'Fix hinges first, then sand, prime, paint.',equip:[]},
+{id:'dr12',title:'Clean wardrobe interior',room:'Dan\'s Room',tier:'small',freq:'quarterly',mins:30,notes:'Full empty, wipe inside, reorganise.',equip:[]},
+{id:'dr13',title:'Wash windows',room:'Dan\'s Room',tier:'small',freq:'quarterly',mins:30,notes:'Part of windows rotation.',equip:[]},
+{id:'dr14',title:'Dust & wipe light fitting',room:'Dan\'s Room',tier:'micro',freq:'monthly',mins:5,notes:'Quick pass.',equip:[]},
+
+// LUCAS ROOM
+{id:'lu01',title:'Hoover Lucas\'s room carpet',room:'Lucas\'s Room',tier:'micro',freq:'2-3x week',mins:10,notes:'Carpet — more frequent than hard floors.',equip:['Regular vacuum']},
+{id:'lu02',title:'Dust skirting boards',room:'Lucas\'s Room',tier:'micro',freq:'fortnightly',mins:10,notes:'Dry pass only.',equip:[]},
+{id:'lu03',title:'Wipe windowsill',room:'Lucas\'s Room',tier:'micro',freq:'fortnightly',mins:5,notes:'Clear first, then wipe.',equip:[]},
+{id:'lu04',title:'Check for damp & mould',room:'Lucas\'s Room',tier:'micro',freq:'weekly',mins:5,notes:'Check walls, ceiling and around windows. Treat immediately — do not let it establish.',equip:[]},
+{id:'lu05',title:'Empty bin',room:'Lucas\'s Room',tier:'micro',freq:'weekly',mins:2,notes:'Part of bins circuit.',equip:[]},
+{id:'lu06',title:'Scrub skirting boards',room:'Lucas\'s Room',tier:'small',freq:'monthly',mins:30,notes:'Warm soapy water — full room wash.',equip:[]},
+{id:'lu07',title:'Deep clean carpet',room:'Lucas\'s Room',tier:'large',freq:'quarterly',mins:120,notes:'Carpet shampooer — same as Dan\'s room.',equip:['Carpet shampooer']},
+{id:'lu08',title:'Clean wardrobe interior',room:'Lucas\'s Room',tier:'small',freq:'quarterly',mins:30,notes:'Full empty, wipe inside, reorganise.',equip:[]},
+{id:'lu09',title:'Wash windows',room:'Lucas\'s Room',tier:'small',freq:'quarterly',mins:30,notes:'Part of windows rotation.',equip:[]},
+{id:'lu10',title:'Dust & wipe light fitting',room:'Lucas\'s Room',tier:'micro',freq:'monthly',mins:5,notes:'Quick pass.',equip:[]},
+{id:'lu11',title:'Treat mould if found',room:'Lucas\'s Room',tier:'small',freq:'monthly',mins:20,notes:'Spray, wipe, touch-up paint. Do not let it spread.',equip:[]},
+
+// STAIRS & LANDING
+{id:'sl01',title:'Hoover stairs',room:'Stairs & Landing',tier:'micro',freq:'weekly',mins:15,notes:'Stair attachment — high traffic, shows dirt fast.',equip:['Regular vacuum']},
+{id:'sl02',title:'Hoover hallway landing',room:'Stairs & Landing',tier:'micro',freq:'2-3x week',mins:10,notes:'Part of floors circuit.',equip:['Regular vacuum']},
+{id:'sl03',title:'Clear landing surfaces',room:'Stairs & Landing',tier:'micro',freq:'daily',mins:5,notes:'Nothing lives on the landing — basket method.',equip:[]},
+{id:'sl04',title:'Dust banisters',room:'Stairs & Landing',tier:'micro',freq:'weekly',mins:10,notes:'Dry cloth — separate from polish/restore job.',equip:[]},
+{id:'sl05',title:'Dust skirting — stairs & landing',room:'Stairs & Landing',tier:'micro',freq:'fortnightly',mins:15,notes:'Miles of it — do in sections.',equip:[]},
+{id:'sl06',title:'Dust ceiling lights & remove cobwebs',room:'Stairs & Landing',tier:'micro',freq:'monthly',mins:10,notes:'Extendable duster — especially stairwell corners.',equip:[]},
+{id:'sl07',title:'Scrub skirting — section 1',room:'Stairs & Landing',tier:'small',freq:'monthly',mins:30,notes:'Split into thirds — rotate one section per month.',equip:[]},
+{id:'sl08',title:'Scrub skirting — section 2',room:'Stairs & Landing',tier:'small',freq:'monthly',mins:30,notes:'Second section of landing skirting rotation.',equip:[]},
+{id:'sl09',title:'Scrub skirting — section 3',room:'Stairs & Landing',tier:'small',freq:'monthly',mins:30,notes:'Third section of landing skirting rotation.',equip:[]},
+{id:'sl10',title:'Clean airing cupboard',room:'Stairs & Landing',tier:'small',freq:'quarterly',mins:45,notes:'Full empty, wipe shelves, reorganise, check for damp.',equip:[]},
+{id:'sl11',title:'Clean high window',room:'Stairs & Landing',tier:'small',freq:'quarterly',mins:30,notes:'Difficult access — extension pole or stepladder.',equip:[]},
+{id:'sl12',title:'Polish & restore banisters',room:'Stairs & Landing',tier:'small',freq:'quarterly',mins:45,notes:'Pale residue — identify correct product first (Step Change).',equip:[]},
+{id:'sl13',title:'Fix underlay at mid-landing',room:'Stairs & Landing',tier:'large',freq:'one-off',mins:60,notes:'Tack or staple down — trip hazard.',equip:[]},
+{id:'sl14',title:'Repaint stairs & hallway walls',room:'Stairs & Landing',tier:'major',freq:'annually',mins:999,notes:'High-traffic scuff zone — durable paint, proper prep.',equip:[]},
+
+// BATHROOM
+{id:'ba01',title:'Weekly bathroom spruce',room:'Bathroom',tier:'micro',freq:'weekly',mins:15,notes:'Sink, toilet, surfaces, mirror wipe — anchor to Friday evening or Saturday morning.',equip:[]},
+{id:'ba02',title:'Clean toilet bowl, seat & base',room:'Bathroom',tier:'micro',freq:'weekly',mins:10,notes:'Part of weekly spruce.',equip:[]},
+{id:'ba03',title:'Wipe sink & taps',room:'Bathroom',tier:'micro',freq:'weekly',mins:5,notes:'Part of weekly spruce.',equip:[]},
+{id:'ba04',title:'Steam bathroom floor',room:'Bathroom',tier:'micro',freq:'weekly',mins:10,notes:'Damp house — floor gets grimy fast.',equip:['Floor steamer']},
+{id:'ba05',title:'Wipe window rims & sill',room:'Bathroom',tier:'micro',freq:'weekly',mins:5,notes:'Condensation collects here — frequent attention.',equip:[]},
+{id:'ba06',title:'Tidy bathroom caddy',room:'Bathroom',tier:'micro',freq:'weekly',mins:5,notes:'Edit contents, wipe the caddy.',equip:[]},
+{id:'ba07',title:'Wipe scales',room:'Bathroom',tier:'micro',freq:'fortnightly',mins:5,notes:'Top and sides.',equip:[]},
+{id:'ba08',title:'Empty bins',room:'Bathroom',tier:'micro',freq:'fortnightly',mins:5,notes:'Part of bins circuit.',equip:[]},
+{id:'ba09',title:'Change floor mats',room:'Bathroom',tier:'micro',freq:'monthly',mins:5,notes:'Wash and rotate — keep a clean set ready.',equip:[]},
+{id:'ba10',title:'Treat corner mould trap',room:'Bathroom',tier:'micro',freq:'monthly',mins:10,notes:'Spray, wipe, monitor — recurring damp fact.',equip:[]},
+{id:'ba11',title:'Treat interior window mould',room:'Bathroom',tier:'micro',freq:'monthly',mins:10,notes:'Spray, wipe, touch up paint.',equip:[]},
+{id:'ba12',title:'Dust high shelf',room:'Bathroom',tier:'micro',freq:'monthly',mins:10,notes:'Remove paint spats while up there.',equip:[]},
+{id:'ba13',title:'Dust light above sink',room:'Bathroom',tier:'micro',freq:'monthly',mins:5,notes:'Not working — note for fixing, but dust anyway.',equip:[]},
+{id:'ba14',title:'Wipe skirting boards',room:'Bathroom',tier:'micro',freq:'fortnightly',mins:10,notes:'Bathroom skirting gets damp-grimy fast.',equip:[]},
+{id:'ba15',title:'Deep clean shower inside',room:'Bathroom',tier:'small',freq:'fortnightly',mins:30,notes:'Walls, floor, fittings — spray, scrub, rinse.',equip:['Hand steamer']},
+{id:'ba16',title:'Clean shower door & surround',room:'Bathroom',tier:'small',freq:'fortnightly',mins:25,notes:'Both sides, rubber seal, metal surround.',equip:['Hand steamer']},
+{id:'ba17',title:'Scrub skirting boards',room:'Bathroom',tier:'small',freq:'monthly',mins:25,notes:'Warm soapy water — damp zone.',equip:[]},
+{id:'ba18',title:'Declutter & clean under-sink cupboard',room:'Bathroom',tier:'small',freq:'quarterly',mins:30,notes:'Full empty, wipe inside, edit.',equip:[]},
+{id:'ba19',title:'Deep clean mirror',room:'Bathroom',tier:'small',freq:'monthly',mins:15,notes:'Full clean including frame and edges.',equip:[]},
+{id:'ba20',title:'Clean back-of-door storage',room:'Bathroom',tier:'small',freq:'quarterly',mins:20,notes:'Bags and hooks — edit contents, wipe door.',equip:[]},
+{id:'ba21',title:'Declutter radiator & windowsill',room:'Bathroom',tier:'small',freq:'monthly',mins:15,notes:'Nothing should live on either.',equip:[]},
+{id:'ba22',title:'Scrub wall beading',room:'Bathroom',tier:'small',freq:'monthly',mins:20,notes:'Grooves harbour dirt — small brush or toothbrush.',equip:[]},
+{id:'ba23',title:'Steam clean shower door & surround',room:'Bathroom',tier:'large',freq:'quarterly',mins:60,notes:'Deep descale and degrease.',equip:['Hand steamer']},
+{id:'ba24',title:'Fix light above sink',room:'Bathroom',tier:'large',freq:'one-off',mins:30,notes:'Check bulb first — if fitting issue, electrician.',equip:[]},
+{id:'ba25',title:'Repaint bathroom ceiling',room:'Bathroom',tier:'major',freq:'annually',mins:999,notes:'Damp-proof bathroom paint — proper prep.',equip:[]},
+{id:'ba26',title:'Gloss undercoated windowsill',room:'Bathroom',tier:'major',freq:'one-off',mins:60,notes:'Sand lightly, gloss. Batch with living room sill.',equip:[]},
+{id:'ba27',title:'Wipe bathroom window inside',room:'Bathroom',tier:'micro',freq:'weekly',mins:5,notes:'Condensation — needs regular attention.',equip:[]},
+
+// BOYS BATHROOM (assign-first)
+{id:'bb01',title:'Weekly boys bathroom spruce',room:'Boys\' Bathroom',tier:'micro',freq:'weekly',mins:15,notes:'Sink, toilet, surfaces — assign to boys.',equip:[],defaultAssign:'Boys'},
+{id:'bb02',title:'Clean toilet — boys bathroom',room:'Boys\' Bathroom',tier:'micro',freq:'weekly',mins:10,notes:'Bowl, seat, rim, base.',equip:[],defaultAssign:'Boys'},
+{id:'bb03',title:'Wipe sink & taps — boys bathroom',room:'Boys\' Bathroom',tier:'micro',freq:'weekly',mins:5,notes:'',equip:[],defaultAssign:'Boys'},
+{id:'bb04',title:'Steam boys bathroom floor',room:'Boys\' Bathroom',tier:'micro',freq:'weekly',mins:10,notes:'',equip:['Floor steamer'],defaultAssign:'Boys'},
+{id:'bb05',title:'Empty bins — boys bathroom',room:'Boys\' Bathroom',tier:'micro',freq:'fortnightly',mins:5,notes:'',equip:[],defaultAssign:'Boys'},
+{id:'bb06',title:'Deep clean shower — boys bathroom',room:'Boys\' Bathroom',tier:'small',freq:'fortnightly',mins:30,notes:'Assign to boys — prompt if not done.',equip:['Hand steamer'],defaultAssign:'Boys'},
+{id:'bb07',title:'Treat mould — boys bathroom',room:'Boys\' Bathroom',tier:'small',freq:'monthly',mins:20,notes:'Check corners, above window, ceiling.',equip:[],defaultAssign:'Boys'},
+{id:'bb08',title:'Scrub skirting — boys bathroom',room:'Boys\' Bathroom',tier:'small',freq:'monthly',mins:25,notes:'',equip:[],defaultAssign:'Boys'},
+{id:'bb09',title:'Repaint boys bathroom ceiling',room:'Boys\' Bathroom',tier:'major',freq:'annually',mins:999,notes:'Damp-proof paint.',equip:[],defaultAssign:'Boys'},
+
+// OFFICE
+{id:'of01',title:'Hoover office floor',room:'Office',tier:'micro',freq:'weekly',mins:10,notes:'Currently blocked by clutter — unlocked once floor is cleared.',equip:['Regular vacuum']},
+{id:'of02',title:'Wipe desk surface',room:'Office',tier:'micro',freq:'weekly',mins:10,notes:'Clear first, then wipe.',equip:[]},
+{id:'of03',title:'Wipe windowsill',room:'Office',tier:'micro',freq:'weekly',mins:5,notes:'Permanent dust from peeling ceiling.',equip:[]},
+{id:'of04',title:'Treat mould above window',room:'Office',tier:'micro',freq:'monthly',mins:10,notes:'Same recurring treatment as living room and bathroom.',equip:[]},
+{id:'of05',title:'Dust pictures & light fitting',room:'Office',tier:'micro',freq:'monthly',mins:10,notes:'Extendable duster for light.',equip:[]},
+{id:'of06',title:'Dust fire extinguisher',room:'Office',tier:'micro',freq:'monthly',mins:5,notes:'Wipe down — also check the gauge.',equip:[]},
+{id:'of07',title:'Cull old work files & attachments',room:'Office',tier:'small',freq:'annually',mins:45,notes:'One folder at a time — what is legally required vs what can go.',equip:[]},
+{id:'of08',title:'Clear wicker chair',room:'Office',tier:'small',freq:'one-off',mins:30,notes:'Everything off — then the chair has a purpose or it leaves.',equip:[]},
+{id:'of09',title:'Clear foot massager & find it a home',room:'Office',tier:'small',freq:'one-off',mins:20,notes:'Accessible = used. Find it a spot you will actually reach for it.',equip:[]},
+{id:'of10',title:'Clean shredder & paper bin',room:'Office',tier:'small',freq:'quarterly',mins:15,notes:'Empty shredder bin, wipe both down.',equip:[]},
+{id:'of11',title:'Tidy one shelving section',room:'Office',tier:'small',freq:'monthly',mins:30,notes:'Floor to ceiling is too big — one section per month.',equip:[]},
+{id:'of12',title:'Clear & reorganise office floor',room:'Office',tier:'large',freq:'one-off',mins:180,notes:'The job that unlocks everything else in this room.',equip:[]},
+{id:'of13',title:'Sort shelving into zones',room:'Office',tier:'large',freq:'one-off',mins:180,notes:'Shoes, cables, sewing, tools, bags — each category needs a zone.',equip:[]},
+{id:'of14',title:'Scrub accessible skirting boards',room:'Office',tier:'large',freq:'quarterly',mins:60,notes:'Mostly inaccessible until floor cleared.',equip:[]},
+{id:'of15',title:'Stabilise ceiling — sand & prime',room:'Office',tier:'large',freq:'one-off',mins:120,notes:'Sugar soap, sand back to stable surface, stabilising primer. Do not paint until peeling has fully stopped.',equip:[]},
+{id:'of16',title:'Repaint office ceiling',room:'Office',tier:'major',freq:'one-off',mins:999,notes:'Stabilising primer first, then stain-block, then ceiling paint. Only when peeling has fully stopped.',equip:[]},
+{id:'of17',title:'Wipe office window inside',room:'Office',tier:'small',freq:'quarterly',mins:20,notes:'Part of windows rotation.',equip:[]},
+
+// DINING ROOM
+{id:'di01',title:'Clear & wipe dining table',room:'Dining Room',tier:'micro',freq:'daily',mins:5,notes:'Will refill — daily reset. Other people\'s stuff goes in a basket.',equip:[]},
+{id:'di02',title:'Hoover dining room floor',room:'Dining Room',tier:'micro',freq:'weekly',mins:10,notes:'Part of floors circuit.',equip:['Regular vacuum']},
+{id:'di03',title:'Wipe windowsill',room:'Dining Room',tier:'micro',freq:'weekly',mins:5,notes:'Clear first, wipe, keep clear.',equip:[]},
+{id:'di04',title:'Dust white shelving',room:'Dining Room',tier:'micro',freq:'fortnightly',mins:15,notes:'Quick pass.',equip:[]},
+{id:'di05',title:'Dust & wipe pictures',room:'Dining Room',tier:'micro',freq:'monthly',mins:10,notes:'Frames front and top.',equip:[]},
+{id:'di06',title:'Dust violin',room:'Dining Room',tier:'micro',freq:'monthly',mins:5,notes:'Instrument cloth only — no household spray near it.',equip:[]},
+{id:'di07',title:'Wipe wooden unit surfaces',room:'Dining Room',tier:'micro',freq:'fortnightly',mins:10,notes:'Marked and stained.',equip:[]},
+{id:'di08',title:'Dust skirting boards',room:'Dining Room',tier:'micro',freq:'fortnightly',mins:10,notes:'Dry pass.',equip:[]},
+{id:'di09',title:'Scrub skirting boards',room:'Dining Room',tier:'small',freq:'monthly',mins:30,notes:'Warm soapy water.',equip:[]},
+{id:'di10',title:'Declutter wooden unit drawers',room:'Dining Room',tier:'small',freq:'quarterly',mins:30,notes:'Part of house-wide drawer cull.',equip:[]},
+{id:'di11',title:'Weed music books & unused shelf items',room:'Dining Room',tier:'small',freq:'annually',mins:30,notes:'Why is it there? If no answer, it goes.',equip:[]},
+{id:'di12',title:'Edit board game cupboard',room:'Dining Room',tier:'small',freq:'annually',mins:45,notes:'Involve the kids in the edit.',equip:[]},
+{id:'di13',title:'Tidy & wipe bookshelves',room:'Dining Room',tier:'small',freq:'quarterly',mins:45,notes:'Books out, dust, wipe shelf, back in neatly.',equip:[]},
+{id:'di14',title:'Route dining room cables',room:'Dining Room',tier:'large',freq:'one-off',mins:90,notes:'Batch with living room cable job.',equip:[]},
+{id:'di15',title:'Sand & repaint dog-damaged door',room:'Dining Room',tier:'major',freq:'one-off',mins:999,notes:'Batch with house doors day.',equip:[]},
+{id:'di16',title:'Wipe dining room window inside',room:'Dining Room',tier:'small',freq:'quarterly',mins:20,notes:'Part of windows rotation.',equip:[]},
+
+// PANTRY
+{id:'pa01',title:'Sweep pantry floor',room:'Pantry',tier:'micro',freq:'weekly',mins:10,notes:'Sweep accessible areas.',equip:[]},
+{id:'pa02',title:'Check shelves for mould',room:'Pantry',tier:'micro',freq:'weekly',mins:5,notes:'Quick visual scan — damp house, food storage, catch it early.',equip:[]},
+{id:'pa03',title:'Wipe fridge top',room:'Pantry',tier:'micro',freq:'fortnightly',mins:5,notes:'Grease and dust collect up there.',equip:[]},
+{id:'pa04',title:'Wipe small window',room:'Pantry',tier:'micro',freq:'monthly',mins:5,notes:'Inside — small but gets grimy in a food room.',equip:[]},
+{id:'pa05',title:'Wipe one shelf — bottom rotation',room:'Pantry',tier:'micro',freq:'monthly',mins:15,notes:'One shelf per month — rotate through all three.',equip:[]},
+{id:'pa06',title:'Cull tea towels and rags',room:'Pantry',tier:'micro',freq:'quarterly',mins:15,notes:'Keep a fixed number, rest go.',equip:[]},
+{id:'pa07',title:'Wipe veg rack',room:'Pantry',tier:'micro',freq:'monthly',mins:10,notes:'Empty, wipe, check for debris underneath.',equip:[]},
+{id:'pa08',title:'Deep clean large fridge inside',room:'Pantry',tier:'small',freq:'quarterly',mins:45,notes:'Full empty, shelves out, wipe inside, check door seals.',equip:[]},
+{id:'pa09',title:'Tidy & organise bottom two shelves',room:'Pantry',tier:'small',freq:'quarterly',mins:30,notes:'Categories, nothing that does not belong.',equip:[]},
+{id:'pa10',title:'Edit top shelf',room:'Pantry',tier:'small',freq:'annually',mins:30,notes:'Seldom-used items — does everything up there still have a purpose?',equip:[]},
+{id:'pa11',title:'Properly mop pantry floor',room:'Pantry',tier:'small',freq:'quarterly',mins:30,notes:'Move everything out, proper mop, move back.',equip:['Floor steamer']},
+{id:'pa12',title:'Reorganise pantry floor layout',room:'Pantry',tier:'large',freq:'one-off',mins:120,notes:'Veg rack, water, ladders, ironing board all competing.',equip:[]},
+
+// UTILITY
+{id:'ut01',title:'Sweep utility floor edges',room:'Utility',tier:'micro',freq:'weekly',mins:10,notes:'Dusty at edges — quick perimeter pass.',equip:[]},
+{id:'ut02',title:'Wipe airer(s)',room:'Utility',tier:'micro',freq:'fortnightly',mins:10,notes:'Wipe bars when not in use, check for rust.',equip:[]},
+{id:'ut03',title:'Wipe washer door seal & drum rim',room:'Utility',tier:'micro',freq:'weekly',mins:5,notes:'Mould trap — wipe after last wash, leave door ajar.',equip:[]},
+{id:'ut04',title:'Wipe dryer lint filter & door seal',room:'Utility',tier:'micro',freq:'weekly',mins:5,notes:'Empty lint every use — wipe seal weekly.',equip:[]},
+{id:'ut05',title:'Wipe windowsill & sink area',room:'Utility',tier:'micro',freq:'weekly',mins:10,notes:'Buried and cluttered — clear first.',equip:[]},
+{id:'ut06',title:'Wipe cupboard doors outside',room:'Utility',tier:'micro',freq:'fortnightly',mins:10,notes:'Three double cupboards — fronts and handles.',equip:[]},
+{id:'ut07',title:'Wipe ceiling spotlights',room:'Utility',tier:'micro',freq:'monthly',mins:10,notes:'Damp room — spotlights collect grease and condensation.',equip:[]},
+{id:'ut08',title:'Clean inside one cupboard',room:'Utility',tier:'small',freq:'monthly',mins:30,notes:'One per month — empty, wipe inside, edit, back in.',equip:[]},
+{id:'ut09',title:'Run washer drum clean cycle',room:'Utility',tier:'small',freq:'monthly',mins:15,notes:'Empty hot wash with drum cleaner or white vinegar.',equip:[]},
+{id:'ut10',title:'Clean dryer inside & filter housing',room:'Utility',tier:'small',freq:'monthly',mins:20,notes:'Beyond lint filter — inside drum, housing.',equip:[]},
+{id:'ut11',title:'Sort & rationalise recycling area',room:'Utility',tier:'small',freq:'monthly',mins:20,notes:'Bottles, dry recycling, deposit returns — one clear system.',equip:[]},
+{id:'ut12',title:'Wipe utility doors',room:'Utility',tier:'small',freq:'monthly',mins:15,notes:'Batch with other doors circuit.',equip:[]},
+{id:'ut13',title:'Deep scrub utility floor — section',room:'Utility',tier:'large',freq:'quarterly',mins:90,notes:'Dark rubber lino — scrubber, warm water, ONE section at a time. Never all in one go.',equip:['Hand steamer']},
+{id:'ut14',title:'Clear & reorganise utility floor',room:'Utility',tier:'large',freq:'one-off',mins:180,notes:'Rowing machine, bike, TV, Nintendo, ironing board — too much competing.',equip:[]},
+{id:'ut15',title:'Replace peeling kickboards',room:'Utility',tier:'major',freq:'one-off',mins:999,notes:'Inexpensive, high visual impact.',equip:[]},
+{id:'ut16',title:'Rationalise laundry receptacles',room:'Utility',tier:'micro',freq:'quarterly',mins:15,notes:'Too many baskets — decide how many needed, remove the rest.',equip:[]},
+
+// GUEST LOO
+{id:'gl01',title:'Full guest loo spruce',room:'Guest Loo',tier:'micro',freq:'weekly',mins:10,notes:'Toilet, sink, surfaces, mirror — small room, 10 mins.',equip:[]},
+{id:'gl02',title:'Wipe floor — guest loo',room:'Guest Loo',tier:'micro',freq:'weekly',mins:5,notes:'Quick pass.',equip:['Floor steamer']},
+{id:'gl03',title:'Empty bin — guest loo',room:'Guest Loo',tier:'micro',freq:'weekly',mins:2,notes:'Part of bins circuit.',equip:[]},
+{id:'gl04',title:'Wipe mirror — guest loo',room:'Guest Loo',tier:'micro',freq:'weekly',mins:5,notes:'Guest-facing — always clean.',equip:[]},
+{id:'gl05',title:'Clear & wipe windowsill — guest loo',room:'Guest Loo',tier:'micro',freq:'fortnightly',mins:5,notes:'Keep it minimal.',equip:[]},
+{id:'gl06',title:'Dust light shade — guest loo',room:'Guest Loo',tier:'micro',freq:'monthly',mins:5,notes:'Quick pass.',equip:[]},
+{id:'gl07',title:'Wipe skirting & pipework',room:'Guest Loo',tier:'micro',freq:'monthly',mins:10,notes:'Exposed pipework collects dust.',equip:[]},
+{id:'gl08',title:'Wipe sink & taps — guest loo',room:'Guest Loo',tier:'micro',freq:'weekly',mins:5,notes:'',equip:[]},
+{id:'gl09',title:'Clean toilet — guest loo',room:'Guest Loo',tier:'micro',freq:'weekly',mins:5,notes:'',equip:[]},
+{id:'gl10',title:'Wash & brighten guest loo door',room:'Guest Loo',tier:'small',freq:'quarterly',mins:20,notes:'Batch with house doors circuit.',equip:[]},
+{id:'gl11',title:'Clean fuse box & surrounding wall',room:'Guest Loo',tier:'small',freq:'annually',mins:15,notes:'Dry cloth only near electrics.',equip:[]},
+
+// DOWNSTAIRS HALLWAY
+{id:'dh01',title:'Steam hallway floor',room:'Downstairs Hallway',tier:'micro',freq:'2-3x week',mins:10,notes:'High-traffic spine of the house.',equip:['Floor steamer']},
+{id:'dh02',title:'Clear jackets from banister',room:'Downstairs Hallway',tier:'micro',freq:'daily',mins:2,notes:'Evening reset circuit — 1 min.',equip:[]},
+{id:'dh03',title:'Dust piano surface',room:'Downstairs Hallway',tier:'micro',freq:'weekly',mins:5,notes:'Clear clutter first — nothing lives on the piano.',equip:[]},
+{id:'dh04',title:'Dust small phone table',room:'Downstairs Hallway',tier:'micro',freq:'weekly',mins:5,notes:'Part of hallway surfaces pass.',equip:[]},
+{id:'dh05',title:'Dust pictures — hallway',room:'Downstairs Hallway',tier:'micro',freq:'fortnightly',mins:10,notes:'Frames front and top.',equip:[]},
+{id:'dh06',title:'Clean around robovac & dehumidifier',room:'Downstairs Hallway',tier:'micro',freq:'fortnightly',mins:10,notes:'Lift, wipe floor, replace.',equip:[]},
+{id:'dh07',title:'Wipe main interior door glass & wood',room:'Downstairs Hallway',tier:'micro',freq:'fortnightly',mins:10,notes:'Handprints on glass, grime on wood.',equip:[]},
+{id:'dh08',title:'Dust skirting — hallway section',room:'Downstairs Hallway',tier:'micro',freq:'fortnightly',mins:15,notes:'Rotate sections — lots of skirting in this hallway.',equip:[]},
+{id:'dh09',title:'Brighten hallway door frames',room:'Downstairs Hallway',tier:'small',freq:'quarterly',mins:45,notes:'6 door frames — wash, touch up paint.',equip:[]},
+{id:'dh10',title:'Sort under stairs cupboard',room:'Downstairs Hallway',tier:'small',freq:'quarterly',mins:45,notes:'Edit ruthlessly each time.',equip:[]},
+{id:'dh11',title:'Deep clean piano',room:'Downstairs Hallway',tier:'small',freq:'quarterly',mins:30,notes:'Keys, body, pedals — proper piano cleaning.',equip:[]},
+{id:'dh12',title:'Deal with archive box',room:'Downstairs Hallway',tier:'small',freq:'one-off',mins:30,notes:'9 months on the floor. Open it, decide, act. File, store, or bin.',equip:[]},
+{id:'dh13',title:'Full under stairs clear-out',room:'Downstairs Hallway',tier:'large',freq:'one-off',mins:120,notes:'Everything out, hoover inside, only put back what belongs.',equip:['Regular vacuum']},
+{id:'dh14',title:'Sand & repaint dog-damaged door',room:'Downstairs Hallway',tier:'major',freq:'one-off',mins:999,notes:'Batch with dining room door — house doors day.',equip:[]},
+{id:'dh15',title:'Scrub hallway skirting boards',room:'Downstairs Hallway',tier:'small',freq:'monthly',mins:30,notes:'Split into sections — rotate monthly.',equip:[]},
+
+// GARDEN & OUTSIDE
+{id:'ga01',title:'Jetwash — in front of resource room',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'One section at a time — not all in one day.',equip:[]},
+{id:'ga02',title:'Jetwash — in front of house',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga03',title:'Jetwash — side of house',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga04',title:'Jetwash — driveway section 1',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'Driveway is long — 6 sections. Allow 1.5-2 hrs each including getting kit out and putting away.',equip:[]},
+{id:'ga05',title:'Jetwash — driveway section 2',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga06',title:'Jetwash — driveway section 3',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga07',title:'Jetwash — driveway section 4',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga08',title:'Jetwash — driveway section 5',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga09',title:'Jetwash — driveway section 6',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga10',title:'Jetwash back pathway',room:'Garden & Outside',tier:'large',freq:'annually',mins:120,notes:'',equip:[]},
+{id:'ga11',title:'Weed driveway section — 1',room:'Garden & Outside',tier:'small',freq:'monthly',mins:30,notes:'Tarmac weeding — at growth times only. One section per session.',equip:[]},
+{id:'ga12',title:'Weed driveway section — 2',room:'Garden & Outside',tier:'small',freq:'monthly',mins:30,notes:'',equip:[]},
+{id:'ga13',title:'Weed driveway section — 3',room:'Garden & Outside',tier:'small',freq:'monthly',mins:30,notes:'',equip:[]},
+{id:'ga14',title:'Weed driveway edges — front of house',room:'Garden & Outside',tier:'small',freq:'monthly',mins:30,notes:'Short intensive sessions.',equip:[]},
+{id:'ga15',title:'Weed back garden — under dining window',room:'Garden & Outside',tier:'small',freq:'monthly',mins:20,notes:'',equip:[]},
+{id:'ga16',title:'Weed around patio area',room:'Garden & Outside',tier:'small',freq:'monthly',mins:20,notes:'',equip:[]},
+{id:'ga17',title:'Leaf & debris blow — front & side',room:'Garden & Outside',tier:'small',freq:'monthly',mins:20,notes:'Priority over drainage areas.',equip:[]},
+{id:'ga18',title:'Leaf & debris blow — driveway & bins area',room:'Garden & Outside',tier:'small',freq:'monthly',mins:20,notes:'Keep drainage clear.',equip:[]},
+{id:'ga19',title:'Prune neighbour\'s overhanging plants',room:'Garden & Outside',tier:'small',freq:'quarterly',mins:45,notes:'Check boundary rules — keep cut material bagged.',equip:[]},
+{id:'ga20',title:'Remove junk items — outside',room:'Garden & Outside',tier:'large',freq:'one-off',mins:120,notes:'Accumulated junk — skip or tip run.',equip:[]},
+
+// STEP CHANGE JOBS
+{id:'sc01',title:'Find a worktop storage solution for appliances',room:'Kitchen',tier:'stepchange',freq:'one-off',mins:15,notes:'Food processor, scales, frother — accessible but not cluttering. Decide before the next cupboard reorganise.',equip:[]},
+{id:'sc02',title:'Decide on proper porch shoe & coat storage',room:'Porch',tier:'stepchange',freq:'one-off',mins:15,notes:'Overcrowding is a system problem. A rack, hooks or basket changes the room permanently.',equip:[]},
+{id:'sc03',title:'Investigate mould root cause — windows',room:'Living Room',tier:'stepchange',freq:'one-off',mins:15,notes:'Already done everything on ventilation. Confirm with landlord if structural.',equip:[]},
+{id:'sc04',title:'Decide on cable management solution — living room',room:'Living Room',tier:'stepchange',freq:'one-off',mins:15,notes:'Clips, trunking, or furniture repositioning? Decide before the cable tidy job.',equip:[]},
+{id:'sc05',title:'Hang the bedroom mirror properly',room:'Master Bedroom',tier:'stepchange',freq:'one-off',mins:15,notes:'Decide where it goes — one plug, one hook. Unlocks the cleaning job.',equip:[]},
+{id:'sc06',title:'Decide what lives on the bedroom windowsill',room:'Master Bedroom',tier:'stepchange',freq:'one-off',mins:10,notes:'Set a rule — random objects accumulate because there is no rule.',equip:[]},
+{id:'sc07',title:'Decide what furniture stays in guest room',room:'Guest Bedroom',tier:'stepchange',freq:'one-off',mins:15,notes:'2 side tables + bedside + 2 lamps is too much. What goes?',equip:[]},
+{id:'sc08',title:'Find a shade for the bare lamp',room:'Guest Bedroom',tier:'stepchange',freq:'one-off',mins:10,notes:'Charity shop or online — small fix, big visual difference.',equip:[]},
+{id:'sc09',title:'Decide where the steamer lives',room:'Guest Bedroom',tier:'stepchange',freq:'one-off',mins:10,notes:'If stored in guest room it needs a proper home. If not, where?',equip:[]},
+{id:'sc10',title:'Identify correct product for banister residue',room:'Stairs & Landing',tier:'stepchange',freq:'one-off',mins:15,notes:'Pale residue — could be wax buildup, old polish or watermark. Post a photo in a DIY forum or ask a hardware shop.',equip:[]},
+{id:'sc11',title:'Identify product for shower door white residue',room:'Bathroom',tier:'stepchange',freq:'one-off',mins:10,notes:'Likely limescale or grout haze. Try white vinegar first.',equip:[]},
+{id:'sc12',title:'Identify product for shower base discolouration',room:'Bathroom',tier:'stepchange',freq:'one-off',mins:10,notes:'Could be limescale, soap scum or staining — product depends on cause.',equip:[]},
+{id:'sc13',title:'Decide about dull flaky chrome fixtures',room:'Bathroom',tier:'stepchange',freq:'one-off',mins:15,notes:'Restore with chrome polish or replace? Chrome plating may be gone — polish won\'t fix that.',equip:[]},
+{id:'sc14',title:'Decide what the shelving is for',room:'Office',tier:'stepchange',freq:'one-off',mins:15,notes:'Too many categories. What stays? What moves? Unlocks the reorganise job.',equip:[]},
+{id:'sc15',title:'Decide about the under-desk cycle',room:'Office',tier:'stepchange',freq:'one-off',mins:15,notes:'Expensive, loved, unused, guilt-inducing. Keep accessible or let it go?',equip:[]},
+{id:'sc16',title:'Find a proper home for the foot massager',room:'Office',tier:'stepchange',freq:'one-off',mins:10,notes:'If accessible you would use it. Where could it live that you would actually reach for it?',equip:[]},
+{id:'sc17',title:'Research stabilising primer for peeling ceiling',room:'Office',tier:'stepchange',freq:'one-off',mins:15,notes:'Polycell Stabilising Solution or similar. Apply before any paint.',equip:[]},
+{id:'sc18',title:'Monthly ceiling check — office',room:'Office',tier:'stepchange',freq:'monthly',mins:5,notes:'Run your hand across it. When nothing comes off, it is ready to prime.',equip:[]},
+{id:'sc19',title:'Gift the cello — decide to whom and when',room:'Dining Room',tier:'stepchange',freq:'one-off',mins:15,notes:'A music school, a young player, a charity. It deserves to be played.',equip:[]},
+{id:'sc20',title:'Establish a table rule with Nick and Lucas',room:'Dining Room',tier:'stepchange',freq:'one-off',mins:15,notes:'The table refills without an agreement. Basket system — their stuff, their responsibility.',equip:[]},
+{id:'sc21',title:'Decide what the dining room is actually for',room:'Dining Room',tier:'stepchange',freq:'one-off',mins:15,notes:'Dining? Work? Dumping? Music storage? Naming its purpose helps everything else.',equip:[]},
+{id:'sc22',title:'Restore or replace marked wooden unit',room:'Dining Room',tier:'stepchange',freq:'one-off',mins:15,notes:'If worth keeping — proper wood cleaner, oil or wax. If not, replace?',equip:[]},
+{id:'sc23',title:'Decide where ladders actually live',room:'Pantry',tier:'stepchange',freq:'one-off',mins:10,notes:'Garage, shed or wall mount. Not in the pantry.',equip:[]},
+{id:'sc24',title:'Agree ironing basket ownership with Nick',room:'Pantry',tier:'stepchange',freq:'one-off',mins:10,notes:'Not a cleaning job — a conversation. His basket, his clothes, his responsibility.',equip:[]},
+{id:'sc25',title:'Decide what to do with rowing machine & bike',room:'Utility',tier:'stepchange',freq:'one-off',mins:15,notes:'Two guilt machines across two rooms. Decide both at the same time.',equip:[]},
+{id:'sc26',title:'Decide where TV and Nintendo belong',room:'Utility',tier:'stepchange',freq:'one-off',mins:10,notes:'They landed on the laundry table. Is that intentional?',equip:[]},
+{id:'sc27',title:'Review privacy film — replace or remove',room:'Utility',tier:'stepchange',freq:'one-off',mins:10,notes:'Old and tired — new film is cheap and transformative.',equip:[]},
+{id:'sc28',title:'Explore slim storage for guest loo',room:'Guest Loo',tier:'stepchange',freq:'one-off',mins:15,notes:'Over-cistern unit or floating shelf — five minutes online before accepting the eyesore.',equip:[]},
+{id:'sc29',title:'Deal with the Christmas gift',room:'Downstairs Hallway',tier:'stepchange',freq:'one-off',mins:15,notes:'Unopened since Christmas. Open it, feel what you feel, then act.',equip:[]},
+{id:'sc30',title:'Find guitar a proper home',room:'Downstairs Hallway',tier:'stepchange',freq:'one-off',mins:10,notes:'Temporarily in hallway. Chicken and egg with the office — decide where it actually belongs.',equip:[]},
+{id:'sc31',title:'Establish nothing-on-banister rule',room:'Downstairs Hallway',tier:'stepchange',freq:'one-off',mins:10,notes:'Needs a hook solution near the door so jackets have a home.',equip:[]},
+{id:'sc32',title:'Decide what lives on the piano',room:'Downstairs Hallway',tier:'stepchange',freq:'one-off',mins:5,notes:'Answer: nothing. But needs to be agreed and enforced.',equip:[]},
+{id:'sc33',title:'Review under stairs cupboard purpose',room:'Downstairs Hallway',tier:'stepchange',freq:'one-off',mins:10,notes:'Decide what it is for before the clear-out — otherwise it refills.',equip:[]},
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+function loadState(){
+  try{return JSON.parse(localStorage.getItem('hearth_v1')||'{}');}catch{return {};}
+}
+function saveState(){
+  try{localStorage.setItem('hearth_v1',JSON.stringify(state));}catch{}
+}
+
+let state = loadState();
+
+// Initialise jobs from templates if not already in state
+if(!state.jobs){
+  state.jobs = {};
+  JOB_TEMPLATES.forEach(j=>{
+    state.jobs[j.id]={
+      ...j,
+      last_done:null,
+      assigned_to: j.defaultAssign||'me',
+      reset_count:0,
+      status: j.defaultAssign ? 'assigned' : 'active',
+      assigned_date: j.defaultAssign ? today() : null,
+    };
+  });
+}
+if(!state.stepchange_index) state.stepchange_index = 0;
+if(!state.stepchange_shown) state.stepchange_shown = null;
+
+// ── SMART SCATTER (Option C) ───────────────────────────────────────────────
+// Runs once on first load. Scatters high-frequency micro/small jobs across
+// a realistic past window. Leaves one-off, large, major, and step-change
+// jobs due so they surface for conscious scheduling.
+if(!state.scattered){
+  const SCATTER_FREQS = {
+    'daily':1,'2-3x week':3,'weekly':7,'fortnightly':14,
+    'monthly':30,'quarterly':91,'annually':365,'seasonal':90
+  };
+  const SKIP_TIERS = new Set(['large','major','stepchange']);
+  const SKIP_FREQS = new Set(['one-off','as needed']);
+
+  function randomDaysAgo(maxDays){
+    // Random point within the last frequency window
+    // Weighted slightly toward the middle to avoid too many things due today
+    return Math.floor(Math.random() * maxDays);
+  }
+  function daysAgoDate(n){
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().split('T')[0];
+  }
+
+  Object.values(state.jobs).forEach(j=>{
+    if(SKIP_TIERS.has(j.tier)) return;
+    if(SKIP_FREQS.has(j.freq)) return;
+    if(j.last_done) return; // already has history
+    if(j.status === 'assigned') return;
+    const window = SCATTER_FREQS[j.freq];
+    if(!window) return;
+    // Scatter within the last frequency window so most are NOT due yet
+    // but some naturally will be (those that landed near day 0)
+    const daysAgo = randomDaysAgo(window);
+    j.last_done = daysAgoDate(daysAgo);
+  });
+
+  state.scattered = true;
+  saveState();
+}
+
+saveState();
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function today(){return new Date().toISOString().split('T')[0];}
+function daysBetween(a,b){
+  return Math.floor((new Date(b)-new Date(a))/(1000*60*60*24));
+}
+function dueDate(job){
+  if(!job.last_done) return today(); // never done = due now
+  const days = FREQ_DAYS[job.freq]||0;
+  if(days===0) return null; // one-off done
+  const d = new Date(job.last_done);
+  d.setDate(d.getDate()+days);
+  return d.toISOString().split('T')[0];
+}
+function isDue(job){
+  if(job.status==='assigned'||job.status==='done') return false;
+  if(job.tier==='stepchange') return false;
+  const dd = dueDate(job);
+  if(!dd) return false;
+  return dd <= today();
+}
+function daysOverdue(job){
+  const dd = dueDate(job);
+  if(!dd) return 0;
+  return Math.max(0, daysBetween(dd, today()));
+}
+function lastDoneLabel(job){
+  if(!job.last_done) return 'Never done';
+  const days = daysBetween(job.last_done, today());
+  if(days===0) return 'Done today';
+  if(days===1) return 'Done yesterday';
+  return `Done ${days} days ago`;
+}
+function dueDateLabel(job){
+  const dd = dueDate(job);
+  if(!dd) return '—';
+  const days = daysBetween(today(), dd);
+  if(days<0) return `${Math.abs(days)}d overdue`;
+  if(days===0) return 'Due today';
+  return `Due in ${days}d`;
+}
+
+// ── DISPATCH ───────────────────────────────────────────────────────────────
+function getDueJobs(maxMins){
+  return Object.values(state.jobs)
+    .filter(j=>isDue(j))
+    .filter(j=>!maxMins||j.mins<=maxMins)
+    .sort((a,b)=>{
+      const ao=daysOverdue(a), bo=daysOverdue(b);
+      if(bo!==ao) return bo-ao;
+      return b.reset_count-a.reset_count;
+    });
+}
+
+let currentDispatchJob = null;
+
+function renderDispatch(){
+  const due = getDueJobs();
+  const assigned = Object.values(state.jobs).filter(j=>j.status==='assigned');
+  const total = Object.values(state.jobs).length;
+  const done_today = Object.values(state.jobs).filter(j=>j.last_done===today()).length;
+
+  document.getElementById('stats-bar').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${due.length}</div><div class="stat-lbl">Due now</div></div>
+    <div class="stat-card"><div class="stat-num">${done_today}</div><div class="stat-lbl">Done today</div></div>
+    <div class="stat-card"><div class="stat-num">${assigned.length}</div><div class="stat-lbl">Assigned</div></div>
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total jobs</div></div>
+  `;
+
+  const el = document.getElementById('dispatch-content');
+  if(!due.length){
+    el.innerHTML=`<div class="empty-state"><div class="big">All clear</div><p>Nothing due right now.<br>Try the roulette for something optional.</p></div>`;
+    return;
+  }
+  if(!currentDispatchJob || !due.find(j=>j.id===currentDispatchJob)){
+    currentDispatchJob = due[0].id;
+  }
+  const job = state.jobs[currentDispatchJob];
+  el.innerHTML = renderJobCard(job, 'dispatch');
+}
+
+function renderJobCard(job, mode){
+  const overdue = daysOverdue(job);
+  const dueLabel = dueDateLabel(job);
+  const dueClass = overdue>0?'overdue':overdue===0?'due-soon':'';
+  const equipHtml = job.equip&&job.equip.length
+    ? `<div class="card-equipment">${job.equip.map(e=>`<span class="equip-tag">${e}</span>`).join('')}</div>` : '';
+  const resetHtml = job.reset_count>0
+    ? `<div class="reset-flag">Skipped ${job.reset_count} time${job.reset_count>1?'s':''} — you keep avoiding this one</div>` : '';
+  const notesHtml = job.notes
+    ? `<div class="card-notes">${job.notes}</div>` : '';
+
+  return `
+    <div class="dispatch-card">
+      <div class="card-header">
+        <div style="flex:1">
+          <div class="card-room">${job.room}</div>
+          <div class="card-title">${job.title}</div>
+        </div>
+        <span class="tier-badge t-${job.tier}">${job.tier}</span>
+      </div>
+      <div class="card-meta">
+        <div class="meta-item"><div class="meta-label">Time</div><div class="meta-value">${job.mins===999?'Half day+':job.mins+'m'}</div></div>
+        <div class="meta-item"><div class="meta-label">Due</div><div class="meta-value ${dueClass}">${dueLabel}</div></div>
+        <div class="meta-item"><div class="meta-label">Frequency</div><div class="meta-value">${job.freq}</div></div>
+        <div class="meta-item"><div class="meta-label">Last done</div><div class="meta-value">${lastDoneLabel(job)}</div></div>
+      </div>
+      ${notesHtml}
+      ${equipHtml}
+      ${resetHtml}
+      <div class="card-actions">
+        <button class="btn btn-done" onclick="markDone('${job.id}','${mode}')">✓ Done</button>
+        <button class="btn btn-roulette" onclick="rouletteMe('${mode}')">Roulette me</button>
+      </div>
+      <div class="card-actions-row2">
+        <button class="btn btn-later btn-small" onclick="notNow('${job.id}','${mode}')">Not now</button>
+        <button class="btn btn-assign btn-small" onclick="openAssignModal('${job.id}')">Assign</button>
+        <button class="btn btn-later btn-small" onclick="showInfo('${job.id}')">⋯</button>
+      </div>
+    </div>
+  `;
+}
+
+function markDone(id, mode){
+  state.jobs[id].last_done = today();
+  state.jobs[id].reset_count = 0;
+  state.jobs[id].status = 'active';
+  saveState();
+  showToast('✓ Done — great work');
+  currentDispatchJob = null;
+  if(mode==='dispatch') renderDispatch();
+  if(mode==='roulette') renderRoulette();
+  if(mode==='room') renderRoomJobs(state.jobs[id].room);
+}
+
+function notNow(id, mode){
+  state.jobs[id].reset_count = (state.jobs[id].reset_count||0)+1;
+  saveState();
+  currentDispatchJob = null;
+  if(mode==='dispatch'){
+    const due = getDueJobs();
+    if(due.length>1){
+      const next = due.find(j=>j.id!==id);
+      if(next) currentDispatchJob = next.id;
+    }
+    renderDispatch();
+  }
+  if(mode==='roulette') spinRoulette();
+  if(mode==='room') renderRoomJobs(state.jobs[id].room);
+}
+
+function rouletteMe(mode){
+  if(mode==='dispatch'){
+    const due = getDueJobs();
+    if(due.length<2) return;
+    const others = due.filter(j=>j.id!==currentDispatchJob);
+    currentDispatchJob = others[Math.floor(Math.random()*others.length)].id;
+    renderDispatch();
+  } else {
+    spinRoulette();
+  }
+}
+
+// ── ROULETTE ───────────────────────────────────────────────────────────────
+let rouletteMaxMins = 30;
+let rouletteRoomMode = 'any';
+let rouletteRoom = '';
+
+function setTime(mins, btn){
+  rouletteMaxMins = mins;
+  document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function setRouletteMode(mode, btn){
+  rouletteRoomMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('roulette-room-select').style.display = mode==='room'?'block':'none';
+}
+
+function renderRoulette(){
+  const el = document.getElementById('roulette-content');
+  // Populate room picker
+  const picker = document.getElementById('roulette-room-picker');
+  const rooms = [...new Set(JOB_TEMPLATES.filter(j=>j.tier!=='stepchange').map(j=>j.room))].sort();
+  picker.innerHTML = rooms.map(r=>`<option value="${r}">${r}</option>`).join('');
+  el.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--slate2);font-size:13px;font-weight:300;">Press spin to get a job</div>`;
+}
+
+function spinRoulette(){
+  const maxMins = rouletteMaxMins;
+  let pool = Object.values(state.jobs)
+    .filter(j=>isDue(j));
+
+  // Time bracket filtering
+  if(maxMins===30) pool = pool.filter(j=>j.mins<=30);
+  else if(maxMins===60) pool = pool.filter(j=>j.mins>30&&j.mins<=60);
+  else if(maxMins===180) pool = pool.filter(j=>j.mins>60&&j.mins<=180);
+  else if(maxMins===999) pool = pool.filter(j=>j.mins>180);
+
+  if(rouletteRoomMode==='room'){
+    const room = document.getElementById('roulette-room-picker').value;
+    pool = pool.filter(j=>j.room===room);
+  }
+  const el = document.getElementById('roulette-content');
+  if(!pool.length){
+    el.innerHTML=`<div style="text-align:center;padding:30px 0;color:var(--slate2);font-size:13px;">Nothing due in that time bracket — try a longer window.</div>`;
+    return;
+  }
+  let i=0;
+  let chosen;
+  const tick = setInterval(()=>{
+    const r = pool[Math.floor(Math.random()*pool.length)];
+    el.innerHTML=`<div class="dispatch-card" style="opacity:0.4"><div class="card-header"><div style="flex:1"><div class="card-room">${r.room}</div><div class="card-title">${r.title}</div></div></div></div>`;
+    i++;
+    if(i>12){
+      clearInterval(tick);
+      chosen = pool[Math.floor(Math.random()*pool.length)];
+      el.innerHTML = renderJobCard(chosen,'roulette');
+    }
+  },80);
+}
+
+// ── ROOMS ──────────────────────────────────────────────────────────────────
+let selectedRoom = null;
+
+function renderRooms(){
+  const rooms = [...new Set(JOB_TEMPLATES.filter(j=>j.tier!=='stepchange').map(j=>j.room))].sort();
+  const grid = document.getElementById('room-grid');
+  grid.innerHTML = rooms.map(r=>{
+    const jobs = Object.values(state.jobs).filter(j=>j.room===r&&j.tier!=='stepchange');
+    const due = jobs.filter(j=>isDue(j)).length;
+    const safeR = r.replace(/'/g,'&#39;');
+    return `<div class="room-card ${selectedRoom===r?'selected':''}" data-room="${safeR}" onclick="selectRoom(this.dataset.room)">
+      <div class="room-name">${r}</div>
+      <div class="room-count">${jobs.length} jobs</div>
+      ${due>0?`<div class="room-due">${due} due</div>`:''}
+    </div>`;
+  }).join('');
+  if(selectedRoom) renderRoomJobs(selectedRoom);
+}
+
+function selectRoom(room){
+  selectedRoom = room;
+  renderRooms();
+}
+
+function renderRoomJobs(room){
+  selectedRoom = room;
+  const jobs = Object.values(state.jobs)
+    .filter(j=>j.room===room&&j.tier!=='stepchange')
+    .sort((a,b)=>{
+      const ad=isDue(a)?0:1, bd=isDue(b)?0:1;
+      return ad-bd;
+    });
+  const el = document.getElementById('room-jobs-content');
+  if(!jobs.length){el.innerHTML='';return;}
+  el.innerHTML = `
+    <div class="section-label">${room}</div>
+    ${jobs.map(j=>renderJobCard(j,'room')).join('')}
+  `;
+}
+
+// ── ASSIGNED ───────────────────────────────────────────────────────────────
+function renderAssigned(){
+  const nickJobs = Object.values(state.jobs).filter(j=>j.assigned_to==='Nick'&&j.status==='assigned');
+  const boysJobs = Object.values(state.jobs).filter(j=>j.assigned_to==='Boys'&&j.status==='assigned');
+
+  const renderAssignedList = (jobs, container) => {
+    const el = document.getElementById(container);
+    if(!jobs.length){
+      el.innerHTML=`<div style="color:var(--slate2);font-size:13px;font-weight:300;padding:8px 0;">Nothing assigned.</div>`;
+      return;
+    }
+    el.innerHTML = jobs.map(j=>{
+      const days = j.assigned_date ? daysBetween(j.assigned_date, today()) : 0;
+      const ageLabel = days===0?'Assigned today':days===1?'Assigned yesterday':`Assigned ${days} days ago`;
+      const flag = days>7?' — overdue':'';
+      return `<div class="assigned-card">
+        <span class="assigned-person p-${j.assigned_to==='Nick'?'nick':'boys'}">${j.assigned_to}</span>
+        <div class="assigned-info">
+          <div class="assigned-title">${j.title}</div>
+          <div class="assigned-room">${j.room}</div>
+          <div class="assigned-age">${ageLabel}${flag}</div>
+          <div class="assigned-actions">
+            <button class="btn-tiny btn-markedone" onclick="markAssignedDone('${j.id}')">✓ Done</button>
+            <button class="btn-tiny btn-takeback" onclick="takeBack('${j.id}')">Take back</button>
+            <button class="btn-tiny btn-nudge" onclick="copyNudge('${j.id}')">Copy nudge</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  renderAssignedList(nickJobs,'assigned-nick');
+  renderAssignedList(boysJobs,'assigned-boys');
+}
+
+function markAssignedDone(id){
+  state.jobs[id].last_done = today();
+  state.jobs[id].reset_count = 0;
+  state.jobs[id].status = 'active';
+  state.jobs[id].assigned_to = 'me';
+  saveState();
+  showToast('✓ Marked done');
+  renderAssigned();
+}
+
+function takeBack(id){
+  state.jobs[id].status = 'active';
+  state.jobs[id].assigned_to = 'me';
+  state.jobs[id].assigned_date = null;
+  saveState();
+  renderAssigned();
+}
+
+function copyNudge(id){
+  const j = state.jobs[id];
+  const msg = `Hey — could you do this when you get a chance: "${j.title}" (${j.room}, about ${j.mins}m). Thanks!`;
+  navigator.clipboard.writeText(msg).then(()=>showToast('Nudge copied'));
+}
+
+// ── ASSIGN MODAL ───────────────────────────────────────────────────────────
+let assigningJobId = null;
+
+function openAssignModal(id){
+  assigningJobId = id;
+  document.getElementById('modal-job-title').textContent = state.jobs[id].title;
+  document.getElementById('assign-modal').classList.add('show');
+}
+function closeAssignModal(){
+  document.getElementById('assign-modal').classList.remove('show');
+  assigningJobId = null;
+}
+function confirmAssign(person){
+  if(!assigningJobId) return;
+  state.jobs[assigningJobId].assigned_to = person;
+  state.jobs[assigningJobId].status = 'assigned';
+  state.jobs[assigningJobId].assigned_date = today();
+  saveState();
+  closeAssignModal();
+  showToast(`Assigned to ${person}`);
+  renderDispatch();
+}
+
+// ── STEP CHANGE ────────────────────────────────────────────────────────────
+function renderStepChange(){
+  const scJobs = Object.values(state.jobs).filter(j=>j.tier==='stepchange'&&j.status!=='done');
+  const el = document.getElementById('stepchange-content');
+  const upEl = document.getElementById('stepchange-upcoming');
+
+  if(!scJobs.length){
+    el.innerHTML=`<div style="color:var(--slate2);font-size:13px;font-weight:300;padding:8px 0;">All Step Change jobs resolved. Remarkable.</div>`;
+    upEl.innerHTML='';
+    return;
+  }
+
+  // Show first undone
+  const current = scJobs[0];
+  el.innerHTML=`<div class="stepchange-card">
+    <div class="sc-eyebrow">${current.room}</div>
+    <div class="sc-title">${current.title}</div>
+    <div class="sc-note">${current.notes}</div>
+    <div class="sc-actions">
+      <button class="btn-sc-done" onclick="scDone('${current.id}')">Decision made ✓</button>
+      <button class="btn-sc-snooze" onclick="scSnooze('${current.id}')">Not yet — remind me</button>
+    </div>
+  </div>`;
+
+  // Show upcoming
+  const upcoming = scJobs.slice(1,4);
+  upEl.innerHTML = upcoming.map(j=>`
+    <div style="background:var(--ink2);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;border:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:10px;color:var(--slate2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;">${j.room}</div>
+      <div style="font-size:14px;color:var(--cream);">${j.title}</div>
+    </div>
+  `).join('');
+}
+
+function scDone(id){
+  if(state.jobs[id].freq==='one-off'){
+    state.jobs[id].status='done';
+  } else {
+    state.jobs[id].last_done = today();
+  }
+  saveState();
+  showToast('Step change made ✓');
+  renderStepChange();
+}
+function scSnooze(id){
+  // Move to end of queue by bumping last_done
+  state.jobs[id].last_done = today();
+  saveState();
+  renderStepChange();
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+  if(name==='dispatch') renderDispatch();
+  if(name==='roulette') renderRoulette();
+  if(name==='rooms') renderRooms();
+  if(name==='assigned') renderAssigned();
+  if(name==='stepchange') renderStepChange();
+  if(name==='settings') renderSettings();
+}
+
+// ── JOB EDITOR ─────────────────────────────────────────────────────────────
+let editorSelectedId = null;
+
+function renderSettings(){
+  filterEditorJobs();
+}
+
+function filterEditorJobs(){
+  const q = (document.getElementById('editor-search').value||'').toLowerCase();
+  const jobs = Object.values(state.jobs)
+    .filter(j=> !q || j.title.toLowerCase().includes(q) || j.room.toLowerCase().includes(q))
+    .sort((a,b)=>a.room.localeCompare(b.room)||a.title.localeCompare(b.title))
+    .slice(0,30);
+  const el = document.getElementById('editor-job-list');
+  if(!jobs.length){el.innerHTML='<div style="font-size:13px;color:var(--slate);padding:8px 0;">No jobs found.</div>';return;}
+  el.innerHTML = jobs.map(j=>`
+    <div class="editor-job-item ${editorSelectedId===j.id?'selected':''}" data-id="${j.id}" onclick="selectEditorJob(this.dataset.id)">
+      <div>
+        <div class="editor-job-name">${j.title}</div>
+        <div class="editor-job-room">${j.room} · ${j.tier} · ${j.freq}</div>
+      </div>
+      <span class="tier-badge t-${j.tier}" style="flex-shrink:0;">${j.tier}</span>
+    </div>
+  `).join('');
+}
+
+function selectEditorJob(id){
+  editorSelectedId = id;
+  const j = state.jobs[id];
+  filterEditorJobs();
+  const freqs = ['daily','2-3x week','weekly','fortnightly','monthly','quarterly','annually','one-off','seasonal','as needed'];
+  const tiers = ['micro','small','large','major','stepchange'];
+  document.getElementById('editor-form-wrap').innerHTML = `
+    <div class="editor-form">
+      <label>Title</label>
+      <input id="ef-title" value="${j.title.replace(/"/g,'&quot;')}">
+      <label>Room</label>
+      <input id="ef-room" value="${j.room.replace(/"/g,'&quot;')}">
+      <label>Tier</label>
+      <select id="ef-tier">
+        ${tiers.map(t=>`<option value="${t}" ${j.tier===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <label>Frequency</label>
+      <select id="ef-freq">
+        ${freqs.map(f=>`<option value="${f}" ${j.freq===f?'selected':''}>${f}</option>`).join('')}
+      </select>
+      <label>Duration (minutes)</label>
+      <input id="ef-mins" type="number" min="1" value="${j.mins===999?240:j.mins}">
+      <label>Notes</label>
+      <textarea id="ef-notes">${j.notes||''}</textarea>
+      <button class="editor-save" onclick="saveEditorJob('${id}')">Save changes</button>
+      <button class="editor-reset-job" onclick="resetJobHistory('${id}')">Reset done history for this job</button>
+    </div>
+  `;
+}
+
+function saveEditorJob(id){
+  const j = state.jobs[id];
+  j.title = document.getElementById('ef-title').value.trim()||j.title;
+  j.room = document.getElementById('ef-room').value.trim()||j.room;
+  j.tier = document.getElementById('ef-tier').value;
+  j.freq = document.getElementById('ef-freq').value;
+  j.mins = parseInt(document.getElementById('ef-mins').value)||j.mins;
+  j.notes = document.getElementById('ef-notes').value.trim();
+  saveState();
+  showToast('Job updated');
+  filterEditorJobs();
+}
+
+function resetJobHistory(id){
+  state.jobs[id].last_done = null;
+  state.jobs[id].reset_count = 0;
+  saveState();
+  showToast('History reset');
+}
+
+function reScatter(){
+  if(!confirm('This will re-randomise all job dates. Any jobs you\'ve marked done recently will be reset. Continue?')) return;
+  state.scattered = false;
+  // Clear all last_done dates for non-large/major/stepchange jobs
+  Object.values(state.jobs).forEach(j=>{
+    const skipTiers = new Set(['large','major','stepchange']);
+    const skipFreqs = new Set(['one-off','as needed']);
+    if(skipTiers.has(j.tier)) return;
+    if(skipFreqs.has(j.freq)) return;
+    j.last_done = null;
+  });
+  // Re-run scatter
+  const SCATTER_FREQS = {'daily':1,'2-3x week':3,'weekly':7,'fortnightly':14,'monthly':30,'quarterly':91,'annually':365,'seasonal':90};
+  Object.values(state.jobs).forEach(j=>{
+    const skipTiers = new Set(['large','major','stepchange']);
+    const skipFreqs = new Set(['one-off','as needed']);
+    if(skipTiers.has(j.tier)) return;
+    if(skipFreqs.has(j.freq)) return;
+    if(j.status==='assigned') return;
+    const window = SCATTER_FREQS[j.freq];
+    if(!window) return;
+    const daysAgo = Math.floor(Math.random()*window);
+    const d = new Date();
+    d.setDate(d.getDate()-daysAgo);
+    j.last_done = d.toISOString().split('T')[0];
+  });
+  state.scattered = true;
+  saveState();
+  showToast('Dates re-scattered');
+  renderSettings();
+}
+
+function resetAllData(){
+  if(!confirm('This will delete all your data and start completely fresh. Are you sure?')) return;
+  localStorage.removeItem('hearth_v1');
+  location.reload();
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function showInfo(id){
+  const j = state.jobs[id];
+  showToast(`${j.freq} · ${j.mins===999?'Major project':j.mins+'m'}`);
+}
+
+// ── EXPORT / IMPORT ────────────────────────────────────────────────────────
+function exportData(){
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `hearth-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup saved');
+}
+
+function importData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      state = JSON.parse(ev.target.result);
+      saveState();
+      renderDispatch();
+      showToast('Data restored');
+    }catch{showToast('Import failed — invalid file');}
+  };
+  reader.readAsText(file);
+}
+
+// ── NAV DATE ───────────────────────────────────────────────────────────────
+const now = new Date();
+document.getElementById('nav-date').textContent = now.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderDispatch();
+</script>
+
+<!-- export moved to Settings tab -->
+
+</body>
+</html>
