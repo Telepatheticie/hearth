@@ -618,6 +618,7 @@ body{
 <div class="toast" id="toast"></div>
 
 <script>
+(async function(){
 // ── FREQUENCIES ────────────────────────────────────────────────────────────
 const FREQ_DAYS = {
   'daily':1,'2-3x week':3,'weekly':7,'fortnightly':14,
@@ -1026,34 +1027,39 @@ function saveState(){
 
 // ── USER KEY SETUP SCREEN ──────────────────────────────────────────────────
 function showKeySetup(){
-  document.body.innerHTML = `
-    <div style="min-height:100vh;background:#1C1812;display:flex;align-items:center;justify-content:center;padding:24px;">
-      <div style="background:#F7F3ED;border-radius:16px;padding:32px 24px;max-width:360px;width:100%;text-align:center;">
-        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:#1C1812;margin-bottom:6px;"><em style="color:#D4785A;">Hearth</em></div>
-        <div style="font-size:13px;color:#7A6A55;margin-bottom:28px;font-weight:300;line-height:1.5;">Your data lives in the cloud now.<br>Choose a personal key to identify your account.</div>
-        <div style="text-align:left;margin-bottom:16px;">
-          <label style="font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#7A6A55;display:block;margin-bottom:6px;">Your key — something memorable</label>
-          <input id="key-input" placeholder="e.g. sunflower-house-42" style="width:100%;border:1.5px solid #E2D9C8;border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#1C1812;background:#fff;outline:none;" autocomplete="off" autocapitalize="off">
-          <div style="font-size:11px;color:#9A8A75;margin-top:6px;line-height:1.5;">Not a password — just a phrase you won't forget. Lowercase, no spaces. This is how Hearth finds your data on any device.</div>
-        </div>
-        <button onclick="confirmUserKey()" style="width:100%;background:#B85C3A;color:white;border:none;border-radius:8px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;">Start Hearth →</button>
-        <div id="key-error" style="font-size:12px;color:#B03030;min-height:18px;"></div>
+  // Overlay on top of existing DOM — never wipe body
+  const overlay = document.createElement('div');
+  overlay.id = 'key-setup-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#1C1812;display:flex;align-items:center;justify-content:center;padding:24px;z-index:9999;';
+  overlay.innerHTML = `
+    <div style="background:#F7F3ED;border-radius:16px;padding:32px 24px;max-width:360px;width:100%;text-align:center;">
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:#1C1812;margin-bottom:6px;"><em style="color:#D4785A;">Hearth</em></div>
+      <div style="font-size:13px;color:#7A6A55;margin-bottom:28px;font-weight:300;line-height:1.5;">Your data lives in the cloud now.<br>Choose a personal key to identify your account.</div>
+      <div style="text-align:left;margin-bottom:16px;">
+        <label style="font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#7A6A55;display:block;margin-bottom:6px;">Your key — something memorable</label>
+        <input id="key-input" placeholder="e.g. sunflower-house-42" style="width:100%;border:1.5px solid #E2D9C8;border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#1C1812;background:#fff;outline:none;" autocomplete="off" autocapitalize="off">
+        <div style="font-size:11px;color:#9A8A75;margin-top:6px;line-height:1.5;">Not a password — just a phrase you'll remember. Lowercase, no spaces. This is how Hearth finds your data on any device.</div>
       </div>
+      <button id="key-submit-btn" style="width:100%;background:#B85C3A;color:white;border:none;border-radius:8px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;">Start Hearth →</button>
+      <div id="key-error" style="font-size:12px;color:#B03030;min-height:18px;"></div>
     </div>
   `;
-  document.getElementById('key-input').focus();
-  document.getElementById('key-input').addEventListener('keydown', e=>{
-    if(e.key==='Enter') confirmUserKey();
-  });
+  document.body.appendChild(overlay);
+  const input = document.getElementById('key-input');
+  const btn = document.getElementById('key-submit-btn');
+  input.focus();
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') confirmUserKey(); });
+  btn.addEventListener('click', confirmUserKey);
 }
 
 async function confirmUserKey(){
   const raw = document.getElementById('key-input').value.trim().toLowerCase().replace(/\s+/g,'-');
+  const errEl = document.getElementById('key-error');
+  const btn = document.getElementById('key-submit-btn');
   if(raw.length < 4){
-    document.getElementById('key-error').textContent = 'Please use at least 4 characters.';
+    errEl.textContent = 'Please use at least 4 characters.';
     return;
   }
-  const btn = document.querySelector('button');
   btn.textContent = 'Checking…';
   btn.disabled = true;
 
@@ -1062,19 +1068,24 @@ async function confirmUserKey(){
     localStorage.setItem('hearth_user_key', raw);
     userKey = raw;
     if(existing){
-      // Returning user — load their cloud state
       state = existing;
       saveLocalState();
       showToast('Welcome back ✓');
     } else {
-      // New user — upload current local state (may be empty or have template data)
       await sbSave(raw, state);
       showToast('Account created ✓');
     }
     supabaseSynced = true;
-    location.reload(); // clean reload with key set
+    // Remove overlay and render app
+    const overlay = document.getElementById('key-setup-overlay');
+    if(overlay) overlay.remove();
+    initState();
+    renderDispatch();
+    setSyncDot('synced');
+    const keyDisplay = document.getElementById('account-key-display');
+    if(keyDisplay) keyDisplay.textContent = userKey;
   } catch(err){
-    document.getElementById('key-error').textContent = 'Could not connect — check your internet and try again.';
+    errEl.textContent = 'Could not connect — check your internet and try again.';
     btn.textContent = 'Start Hearth →';
     btn.disabled = false;
   }
@@ -1903,8 +1914,10 @@ function setSyncDot(status){
 }
 
 
+function resetAllData(){
   if(!confirm('This will delete all your data and start completely fresh. Are you sure?')) return;
   localStorage.removeItem('hearth_v1');
+  localStorage.removeItem('hearth_user_key');
   location.reload();
 }
 
@@ -2033,7 +2046,43 @@ function initState(){
   }
 }
 
+// ── EXPOSE GLOBALS (needed by inline onclick handlers) ─────────────────────
+window.showTab = showTab;
+window.setTime = setTime;
+window.setRouletteMode = setRouletteMode;
+window.spinRoulette = spinRoulette;
+window.selectRoom = selectRoom;
+window.markDone = markDone;
+window.notNow = notNow;
+window.rouletteMe = rouletteMe;
+window.openAssignModal = openAssignModal;
+window.closeAssignModal = closeAssignModal;
+window.confirmAssign = confirmAssign;
+window.markAssignedDone = markAssignedDone;
+window.takeBack = takeBack;
+window.copyNudge = copyNudge;
+window.scDone = scDone;
+window.scSnooze = scSnooze;
+window.showInfo = showInfo;
+window.tickNextChunk = tickNextChunk;
+window.toggleChunk = toggleChunk;
+window.pickAvailableJob = pickAvailableJob;
+window.filterEditorJobs = filterEditorJobs;
+window.selectEditorJob = selectEditorJob;
+window.saveEditorJob = saveEditorJob;
+window.resetJobHistory = resetJobHistory;
+window.addChunk = addChunk;
+window.deleteChunk = deleteChunk;
+window.saveChunkNames = saveChunkNames;
+window.exportData = exportData;
+window.importData = importData;
+window.reScatter = reScatter;
+window.resetAllData = resetAllData;
+window.switchAccount = switchAccount;
+window.confirmUserKey = confirmUserKey;
+
 boot();
+})();
 </script>
 
 <!-- export moved to Settings tab -->
