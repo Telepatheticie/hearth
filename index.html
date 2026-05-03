@@ -710,10 +710,7 @@ body{
 
 <!-- ASSIGNED -->
 <div id="tab-assigned" class="panel">
-  <div class="section-label">Nick</div>
-  <div id="assigned-nick"></div>
-  <div class="section-label">The boys</div>
-  <div id="assigned-boys"></div>
+  <div id="assigned-all-content"></div>
 </div>
 
 <!-- STEP CHANGE -->
@@ -726,13 +723,41 @@ body{
 
 <!-- SETTINGS -->
 <div id="tab-settings" class="panel">
-  <div class="section-label">Edit a job</div>
-  <input class="editor-search" id="editor-search" placeholder="Search jobs…" oninput="filterEditorJobs()" autocomplete="off">
+  <div class="section-label">Setup & mission</div>
+  <button class="export-btn" style="background:rgba(184,92,58,0.1);color:var(--rust);border-color:rgba(184,92,58,0.3);margin-bottom:8px;" onclick="launchWizardAtStage('mission')">✎ Edit my mission statement</button>
+  <button class="export-btn" style="background:rgba(184,92,58,0.1);color:var(--rust);border-color:rgba(184,92,58,0.3);" onclick="launchWizardAtStage('rooms-select')">↺ Re-run room walkthrough</button>
+
+  <div class="section-label" style="margin-top:28px;">Edit a job</div>
+  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+    <input class="editor-search" id="editor-search" placeholder="Search jobs…" oninput="filterEditorJobs()" autocomplete="off" style="flex:1;min-width:120px;margin-bottom:0;">
+    <select id="editor-filter-room" onchange="filterEditorJobs()" style="border:1.5px solid var(--warm2);border-radius:var(--r2);padding:9px 8px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--card);color:var(--ink);outline:none;flex-shrink:0;">
+      <option value="">All rooms</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;">
+    <select id="editor-filter-tier" onchange="filterEditorJobs()" style="flex:1;border:1.5px solid var(--warm2);border-radius:var(--r2);padding:8px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--card);color:var(--ink);outline:none;">
+      <option value="">All tiers</option>
+      <option value="micro">Micro</option>
+      <option value="small">Small</option>
+      <option value="large">Large</option>
+      <option value="major">Major</option>
+      <option value="stepchange">Step Change</option>
+    </select>
+    <select id="editor-filter-sort" onchange="filterEditorJobs()" style="flex:1;border:1.5px solid var(--warm2);border-radius:var(--r2);padding:8px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--card);color:var(--ink);outline:none;">
+      <option value="room">Sort by room</option>
+      <option value="due">Sort by due date</option>
+      <option value="title">Sort by name</option>
+    </select>
+  </div>
   <div class="editor-job-list" id="editor-job-list"></div>
   <div id="editor-form-wrap"></div>
 
-  <div class="section-label" style="margin-top:28px;">Setup</div>
-  <button class="export-btn" style="background:rgba(184,92,58,0.1);color:var(--rust);border-color:rgba(184,92,58,0.3);" onclick="launchWizard()">↺ Re-run setup wizard</button>
+  <div class="section-label" style="margin-top:28px;">Assignees</div>
+  <div id="assignee-list"></div>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <input id="new-assignee-input" placeholder="Add a name…" style="flex:1;border:1.5px solid var(--warm2);border-radius:var(--r2);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--card);color:var(--ink);outline:none;" onkeydown="if(event.key==='Enter')addAssignee()">
+    <button onclick="addAssignee()" style="background:var(--green);color:white;border:none;border-radius:var(--r2);padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">Add</button>
+  </div>
 
   <div class="section-label" style="margin-top:28px;">Account</div>
   <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;">
@@ -762,16 +787,7 @@ body{
   <div class="modal">
     <div class="modal-title">Assign this job</div>
     <div class="modal-job" id="modal-job-title"></div>
-    <div class="assign-options">
-      <div class="assign-opt" onclick="confirmAssign('Nick')">
-        <div class="assign-opt-name">Nick</div>
-        <div class="assign-opt-note">Bins, ironing & more</div>
-      </div>
-      <div class="assign-opt" onclick="confirmAssign('Boys')">
-        <div class="assign-opt-name">The boys</div>
-        <div class="assign-opt-note">Their rooms & bathroom</div>
-      </div>
-    </div>
+    <div class="assign-options" id="assign-options-list"></div>
     <button class="modal-cancel" onclick="closeAssignModal()">Cancel</button>
   </div>
 </div>
@@ -1728,6 +1744,20 @@ function renderRooms(){
 function selectRoom(room){
   selectedRoom = room;
   renderRooms();
+  // Scroll to job list after render
+  setTimeout(()=>{
+    const el = document.getElementById('room-jobs-content');
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  }, 80);
+}
+
+function isDue(job){
+  if(job.status==='assigned'||job.status==='done') return false;
+  if(job.tier==='stepchange') return false;
+  if(job.wizSkipped) return false; // hidden by user in wizard
+  const dd = dueDate(job);
+  if(!dd) return false;
+  return dd <= today();
 }
 
 function renderRoomJobs(room){
@@ -1748,37 +1778,37 @@ function renderRoomJobs(room){
 
 // ── ASSIGNED ───────────────────────────────────────────────────────────────
 function renderAssigned(){
-  const nickJobs = Object.values(state.jobs).filter(j=>j.assigned_to==='Nick'&&j.status==='assigned');
-  const boysJobs = Object.values(state.jobs).filter(j=>j.assigned_to==='Boys'&&j.status==='assigned');
-
-  const renderAssignedList = (jobs, container) => {
-    const el = document.getElementById(container);
+  const assignees = getAssignees();
+  const el = document.getElementById('assigned-all-content');
+  if(!el) return;
+  let html = '';
+  assignees.forEach(person=>{
+    const jobs = Object.values(state.jobs).filter(j=>j.assigned_to===person&&j.status==='assigned');
+    html += `<div class="section-label">${person}</div>`;
     if(!jobs.length){
-      el.innerHTML=`<div style="color:var(--slate2);font-size:13px;font-weight:300;padding:8px 0;">Nothing assigned.</div>`;
-      return;
-    }
-    el.innerHTML = jobs.map(j=>{
-      const days = j.assigned_date ? daysBetween(j.assigned_date, today()) : 0;
-      const ageLabel = days===0?'Assigned today':days===1?'Assigned yesterday':`Assigned ${days} days ago`;
-      const flag = days>7?' — overdue':'';
-      return `<div class="assigned-card">
-        <span class="assigned-person p-${j.assigned_to==='Nick'?'nick':'boys'}">${j.assigned_to}</span>
-        <div class="assigned-info">
-          <div class="assigned-title">${j.title}</div>
-          <div class="assigned-room">${j.room}</div>
-          <div class="assigned-age">${ageLabel}${flag}</div>
-          <div class="assigned-actions">
-            <button class="btn-tiny btn-markedone" onclick="markAssignedDone('${j.id}')">✓ Done</button>
-            <button class="btn-tiny btn-takeback" onclick="takeBack('${j.id}')">Take back</button>
-            <button class="btn-tiny btn-nudge" onclick="copyNudge('${j.id}')">Copy nudge</button>
+      html += `<div style="color:var(--slate2);font-size:13px;font-weight:300;padding:8px 0 12px;">Nothing assigned.</div>`;
+    } else {
+      html += jobs.map(j=>{
+        const days = j.assigned_date ? daysBetween(j.assigned_date,today()) : 0;
+        const ageLabel = days===0?'Assigned today':days===1?'Assigned yesterday':`Assigned ${days} days ago`;
+        const flag = days>7?' — overdue':'';
+        return `<div class="assigned-card">
+          <span class="assigned-person p-nick">${person}</span>
+          <div class="assigned-info">
+            <div class="assigned-title">${j.title}</div>
+            <div class="assigned-room">${j.room}</div>
+            <div class="assigned-age">${ageLabel}${flag}</div>
+            <div class="assigned-actions">
+              <button class="btn-tiny btn-markedone" onclick="markAssignedDone('${j.id}')">✓ Done</button>
+              <button class="btn-tiny btn-takeback" onclick="takeBack('${j.id}')">Take back</button>
+              <button class="btn-tiny btn-nudge" onclick="copyNudge('${j.id}')">Copy nudge</button>
+            </div>
           </div>
-        </div>
-      </div>`;
-    }).join('');
-  };
-
-  renderAssignedList(nickJobs,'assigned-nick');
-  renderAssignedList(boysJobs,'assigned-boys');
+        </div>`;
+      }).join('');
+    }
+  });
+  el.innerHTML = html;
 }
 
 function markAssignedDone(id){
@@ -1811,6 +1841,11 @@ let assigningJobId = null;
 function openAssignModal(id){
   assigningJobId = id;
   document.getElementById('modal-job-title').textContent = state.jobs[id].title;
+  const assignees = getAssignees();
+  document.getElementById('assign-options-list').innerHTML = assignees.map(a=>`
+    <div class="assign-opt" onclick="confirmAssign('${a}')">
+      <div class="assign-opt-name">${a}</div>
+    </div>`).join('');
   document.getElementById('assign-modal').classList.add('show');
 }
 function closeAssignModal(){
@@ -1897,28 +1932,96 @@ function showTab(name){
 let editorSelectedId = null;
 
 function renderSettings(){
+  // Populate room filter dropdown
+  const roomSel = document.getElementById('editor-filter-room');
+  if(roomSel){
+    const rooms = [...new Set(Object.values(state.jobs).map(j=>j.room))].sort();
+    roomSel.innerHTML = `<option value="">All rooms</option>` +
+      rooms.map(r=>`<option value="${r}">${r}</option>`).join('');
+  }
   filterEditorJobs();
+  renderAssigneeList();
   const keyDisplay = document.getElementById('account-key-display');
   if(keyDisplay) keyDisplay.textContent = userKey || '—';
 }
 
 function filterEditorJobs(){
-  const q = (document.getElementById('editor-search').value||'').toLowerCase();
-  const jobs = Object.values(state.jobs)
-    .filter(j=> !q || j.title.toLowerCase().includes(q) || j.room.toLowerCase().includes(q))
-    .sort((a,b)=>a.room.localeCompare(b.room)||a.title.localeCompare(b.title))
-    .slice(0,30);
+  const q = (document.getElementById('editor-search')||{}).value||'';
+  const roomF = (document.getElementById('editor-filter-room')||{}).value||'';
+  const tierF = (document.getElementById('editor-filter-tier')||{}).value||'';
+  const sortF = (document.getElementById('editor-filter-sort')||{}).value||'room';
+
+  let jobs = Object.values(state.jobs).filter(j=>{
+    if(q && !j.title.toLowerCase().includes(q.toLowerCase()) && !j.room.toLowerCase().includes(q.toLowerCase())) return false;
+    if(roomF && j.room !== roomF) return false;
+    if(tierF && j.tier !== tierF) return false;
+    return true;
+  });
+
+  if(sortF==='room') jobs.sort((a,b)=>a.room.localeCompare(b.room)||a.title.localeCompare(b.title));
+  else if(sortF==='title') jobs.sort((a,b)=>a.title.localeCompare(b.title));
+  else if(sortF==='due') jobs.sort((a,b)=>{
+    const da = dueDate(a)||'9999'; const db = dueDate(b)||'9999';
+    return da.localeCompare(db);
+  });
+
+  jobs = jobs.slice(0,40);
   const el = document.getElementById('editor-job-list');
+  if(!el) return;
   if(!jobs.length){el.innerHTML='<div style="font-size:13px;color:var(--slate);padding:8px 0;">No jobs found.</div>';return;}
   el.innerHTML = jobs.map(j=>`
     <div class="editor-job-item ${editorSelectedId===j.id?'selected':''}" data-id="${j.id}" onclick="selectEditorJob(this.dataset.id)">
       <div>
-        <div class="editor-job-name">${j.title}</div>
+        <div class="editor-job-name">${j.title}${j.wizSkipped?'<span style="font-size:10px;color:var(--slate2);margin-left:6px;">(hidden)</span>':''}</div>
         <div class="editor-job-room">${j.room} · ${j.tier} · ${j.freq}</div>
       </div>
       <span class="tier-badge t-${j.tier}" style="flex-shrink:0;">${j.tier}</span>
     </div>
   `).join('');
+}
+
+// ── ASSIGNEES ───────────────────────────────────────────────────────────────
+function getAssignees(){
+  if(!state.assignees || !state.assignees.length){
+    state.assignees = ['Nick','Boys'];
+  }
+  return state.assignees;
+}
+
+function renderAssigneeList(){
+  const el = document.getElementById('assignee-list');
+  if(!el) return;
+  const assignees = getAssignees();
+  el.innerHTML = assignees.map((a,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--warm2);">
+      <input value="${a.replace(/"/g,'&quot;')}" id="assignee-input-${i}"
+        style="flex:1;border:1.5px solid var(--warm2);border-radius:var(--r2);padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--card);color:var(--ink);outline:none;"
+        onchange="updateAssignee(${i},this.value)">
+      <button onclick="removeAssignee(${i})" style="background:none;border:1px solid var(--warm2);border-radius:6px;color:var(--slate);padding:6px 10px;cursor:pointer;font-size:13px;transition:all 0.15s;" onmouseover="this.style.color='var(--rust)'" onmouseout="this.style.color='var(--slate)'">×</button>
+    </div>`).join('');
+}
+
+function updateAssignee(i, val){
+  if(!val.trim()) return;
+  getAssignees()[i] = val.trim();
+  saveState();
+}
+
+function addAssignee(){
+  const inp = document.getElementById('new-assignee-input');
+  if(!inp||!inp.value.trim()) return;
+  getAssignees().push(inp.value.trim());
+  inp.value='';
+  saveState();
+  renderAssigneeList();
+}
+
+function removeAssignee(i){
+  const assignees = getAssignees();
+  if(assignees.length<=1){ showToast('Keep at least one assignee'); return; }
+  assignees.splice(i,1);
+  saveState();
+  renderAssigneeList();
 }
 
 function selectEditorJob(id){
@@ -2229,6 +2332,655 @@ function initState(){
 
 // ── WIZARD ─────────────────────────────────────────────────────────────────
 const WIZ_ROOMS = [
+  {id:'kitchen',name:'Kitchen',icon:'🍳',room:'Kitchen',
+   prompts:'Look at every surface, cupboard, appliance. What\'s been annoying you silently?',
+   chips:['Cupboards inside','Under the sink','Appliances','Tiles / grout','Sealant','Extractor fan','Fridge seals','Bin area','Worktops','Hob / oven']},
+  {id:'living',name:'Living Room',icon:'🛋️',room:'Living Room',
+   prompts:'Look up, down, behind furniture. Paintwork, skirting, cables, clutter zones.',
+   chips:['Skirting boards','Paintwork','Windows / sills','Behind sofa','Lights','Clutter zones','Cables','Fireplace']},
+  {id:'hallway',name:'Hallway & Stairs',icon:'🚪',room:'Stairs & Landing',
+   prompts:'First impression of your home. Walls, banisters, floors, the clutter that accumulates here.',
+   chips:['Front door area','Shoe clutter','Coat hooks','Banisters','Stair carpet','Wall scuffs','Light fitting','Under stairs']},
+  {id:'main-bed',name:'Main Bedroom',icon:'🛏️',room:'Master Bedroom',
+   prompts:'Your sanctuary — or it should be. Wardrobes inside and out. Under the bed. That chair.',
+   chips:['Under bed','Wardrobe inside','Skirting','Windows','That chair','Paintwork','Curtains / blinds','Ceiling light']},
+  {id:'other-beds',name:'Other Bedrooms',icon:'🛏️',room:'Guest Bedroom',
+   prompts:'Kids\' rooms, spare rooms — honest assessment. What\'s been put off in here?',
+   chips:['Clutter','Under beds','Wardrobes','Paintwork','Windows','Floors','Storage']},
+  {id:'bathroom',name:'Bathroom(s)',icon:'🚿',room:'Bathroom',
+   prompts:'Grout, sealant, caulk — be brutal. Extractor, mirror, storage, taps.',
+   chips:['Grout / sealant','Around bath / shower','Extractor fan','Mirror','Taps / limescale','Cabinet inside','Flooring','Towel rail']},
+  {id:'utility',name:'Utility / Laundry',icon:'🧺',room:'Utility',
+   prompts:'Behind appliances. The chaos shelf. The floor.',
+   chips:['Behind washer / dryer','Sink','Shelving','Airer area','Floor','Cupboards']},
+  {id:'office',name:'Home Office',icon:'💻',room:'Office',
+   prompts:'Cables, shelves, the pile of things with no home.',
+   chips:['Desk surface','Cables','Shelving','Paintwork','Windows','Floor']},
+  {id:'garden',name:'Garden & Outside',icon:'🏡',room:'Garden & Outside',
+   prompts:'Garden, driveway, fences — the forgotten zone.',
+   chips:['Garden tidying','Fences / gates','Driveway','Gutters','Outside lights','Paths']},
+];
+
+// wizState persists across renders — never reset on render, only on explicit launch
+let wizState = {
+  stage: 'mission',
+  mission: {now:'', want:'', know:''},
+  whyStatement: '',
+  excludedRooms: new Set(),
+  currentRoomIdx: 0,
+  extractedJobs: {},   // roomId -> [{text, freq}]
+  roomsDone: new Set(),
+  skippedTemplateJobs: {}, // roomId -> Set of job ids the user unticked
+  roomNotes: {},       // roomId -> textarea content, preserved across re-renders
+};
+
+function launchWizard(){
+  launchWizardAtStage('mission');
+}
+
+function launchWizardAtStage(stage){
+  const overlay = document.getElementById('wizard-overlay');
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // Restore saved wizard state if available
+  if(state.wizState){
+    const saved = state.wizState;
+    wizState.mission = saved.mission || {now:'',want:'',know:''};
+    wizState.whyStatement = saved.whyStatement || '';
+    wizState.excludedRooms = new Set(saved.excludedRooms||[]);
+    wizState.extractedJobs = saved.extractedJobs || {};
+    wizState.roomsDone = new Set(saved.roomsDone||[]);
+    wizState.skippedTemplateJobs = saved.skippedTemplateJobs || {};
+    wizState.roomNotes = saved.roomNotes || {};
+    wizState.currentRoomIdx = saved.currentRoomIdx || 0;
+  } else {
+    // First time — seed from state.mission if exists
+    if(state.mission) wizState.mission = {...state.mission};
+    if(state.whyStatement) wizState.whyStatement = state.whyStatement;
+  }
+  wizState.stage = stage;
+  renderWizard();
+}
+
+function closeWizard(){
+  const overlay = document.getElementById('wizard-overlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function pauseWizard(){
+  captureWizTextarea(); // save any typed text before closing
+  persistWizState();
+  closeWizard();
+  showToast('Progress saved — continue from Settings');
+}
+
+function persistWizState(){
+  // Save full wizard state into app state for cloud sync
+  state.wizState = {
+    stage: wizState.stage,
+    mission: wizState.mission,
+    whyStatement: wizState.whyStatement,
+    excludedRooms: [...wizState.excludedRooms],
+    extractedJobs: wizState.extractedJobs,
+    roomsDone: [...wizState.roomsDone],
+    skippedTemplateJobs: wizState.skippedTemplateJobs,
+    roomNotes: wizState.roomNotes,
+    currentRoomIdx: wizState.currentRoomIdx,
+  };
+  state.mission = {...wizState.mission};
+  state.whyStatement = wizState.whyStatement;
+  saveState();
+}
+
+function captureWizTextarea(){
+  // Before any re-render, capture current textarea value
+  const room = WIZ_ROOMS[wizState.currentRoomIdx];
+  if(!room) return;
+  const ta = document.getElementById(`wiz-ta-${room.id}`);
+  if(ta) wizState.roomNotes[room.id] = ta.value;
+}
+
+function renderWizard(){
+  const overlay = document.getElementById('wizard-overlay');
+  const stages = {mission:1,'rooms-select':2,'rooms-walk':3,summary:4,welcome:5};
+  const pct = ((stages[wizState.stage]||1)-1)/4*100;
+
+  let content = '';
+  if(wizState.stage==='mission') content = renderWizMission();
+  else if(wizState.stage==='rooms-select') content = renderWizRoomsSelect();
+  else if(wizState.stage==='rooms-walk') content = renderWizRoomsWalk();
+  else if(wizState.stage==='summary') content = renderWizSummary();
+  else if(wizState.stage==='welcome') content = renderWizWelcome();
+
+  overlay.innerHTML = `
+    <div class="wiz-screen">
+      <div class="wiz-header">
+        <div class="wiz-logo"><em>Hearth</em> Setup</div>
+        <button class="wiz-skip" onclick="pauseWizard()">Save & do this later</button>
+      </div>
+      <div class="wiz-progress"><div class="wiz-progress-fill" style="width:${pct}%"></div></div>
+      ${content}
+    </div>
+  `;
+  overlay.scrollTop = 0;
+  // Auto-scroll active pip into view after render
+  setTimeout(()=>{
+    const activePip = overlay.querySelector('.wiz-pip.active');
+    if(activePip) activePip.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  }, 50);
+}
+
+// ── STAGE 1: MISSION ───────────────────────────────────────────────────────
+function renderWizMission(){
+  const m = wizState.mission;
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">Step 1 of 4</div>
+      <h1 class="wiz-title">Start with <em>why</em></h1>
+      <p class="wiz-sub">Before jobs and frequencies, take a moment. The most important thing is knowing what you're doing this for.</p>
+
+      <div class="wiz-question">
+        <label>What does your home feel like right now?</label>
+        <textarea id="wiz-now" placeholder="Chaotic. Overwhelming. Like I'm always behind…" oninput="wizState.mission.now=this.value;updateWizWhy()">${m.now||''}</textarea>
+      </div>
+      <div class="wiz-question">
+        <label>What do you want it to feel like?</label>
+        <textarea id="wiz-want" placeholder="Calm. Under control. A place we actually want to be…" oninput="wizState.mission.want=this.value;updateWizWhy()">${m.want||''}</textarea>
+      </div>
+      <div class="wiz-question">
+        <label>How will you know it's working?</label>
+        <textarea id="wiz-know" placeholder="I'll stop dreading people coming over. The boys will have friends round…" oninput="wizState.mission.know=this.value;updateWizWhy()">${m.know||''}</textarea>
+      </div>
+
+      <div id="wiz-why-preview" style="${wizState.whyStatement?'':'display:none'}">
+        <div class="wiz-why-preview">
+          <div class="wiz-why-label">Your why</div>
+          <div class="wiz-why-text" id="wiz-why-text">${wizState.whyStatement||''}</div>
+        </div>
+        <div style="font-size:11px;color:var(--slate);margin-bottom:20px;line-height:1.5;">This will appear quietly in the app as a reminder. You can edit it any time in Settings.</div>
+      </div>
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-next" onclick="wizMissionNext()">Choose your rooms →</button>
+    </div>
+  `;
+}
+
+function updateWizWhy(){
+  const want = wizState.mission.want.trim();
+  const know = wizState.mission.know.trim();
+  if(!want) return;
+  let why = `You're doing this so your home feels ${want.replace(/\.$/, '').toLowerCase()}.`;
+  if(know) why += ` You'll know it's working when ${know.replace(/\.$/, '').toLowerCase()}.`;
+  wizState.whyStatement = why;
+  const preview = document.getElementById('wiz-why-preview');
+  const text = document.getElementById('wiz-why-text');
+  if(preview) preview.style.display = 'block';
+  if(text) text.textContent = why;
+}
+
+function wizMissionNext(){
+  wizState.mission.now = (document.getElementById('wiz-now')||{}).value || wizState.mission.now;
+  wizState.mission.want = (document.getElementById('wiz-want')||{}).value || wizState.mission.want;
+  wizState.mission.know = (document.getElementById('wiz-know')||{}).value || wizState.mission.know;
+  updateWizWhy();
+  persistWizState();
+  wizState.stage = 'rooms-select';
+  renderWizard();
+}
+
+// ── STAGE 2: ROOM SELECTION ────────────────────────────────────────────────
+function renderWizRoomsSelect(){
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">Step 2 of 4</div>
+      <h1 class="wiz-title">Your <em>rooms</em></h1>
+      <p class="wiz-sub">Tap × to remove any rooms you don't have. We'll walk through the rest one by one.</p>
+      <div class="wiz-room-grid">
+        ${WIZ_ROOMS.map(r=>{
+          const excluded = wizState.excludedRooms.has(r.id);
+          return `<div class="wiz-room-tile ${excluded?'excluded':''}" id="wiz-tile-${r.id}">
+            <span class="wiz-room-icon">${r.icon}</span>
+            <span class="wiz-room-name">${r.name}</span>
+            <button class="wiz-room-remove" onclick="toggleWizRoom('${r.id}')">${excluded?'+':'×'}</button>
+          </div>`;
+        }).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--slate);font-weight:300;">You can always add rooms later in Settings.</p>
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-back" onclick="wizState.stage='mission';renderWizard()">←</button>
+      <button class="wiz-btn-next" onclick="wizRoomsSelectNext()">Start the walkthrough →</button>
+    </div>
+  `;
+}
+
+function toggleWizRoom(id){
+  if(wizState.excludedRooms.has(id)) wizState.excludedRooms.delete(id);
+  else wizState.excludedRooms.add(id);
+  persistWizState();
+  renderWizard();
+}
+
+function wizRoomsSelectNext(){
+  wizState.currentRoomIdx = 0;
+  while(wizState.currentRoomIdx < WIZ_ROOMS.length &&
+        wizState.excludedRooms.has(WIZ_ROOMS[wizState.currentRoomIdx].id)){
+    wizState.currentRoomIdx++;
+  }
+  wizState.stage = wizState.currentRoomIdx >= WIZ_ROOMS.length ? 'summary' : 'rooms-walk';
+  persistWizState();
+  renderWizard();
+}
+
+// ── STAGE 3: ROOM WALKTHROUGH ──────────────────────────────────────────────
+function renderWizRoomsWalk(){
+  const activeRooms = WIZ_ROOMS.filter(r=>!wizState.excludedRooms.has(r.id));
+  const room = WIZ_ROOMS[wizState.currentRoomIdx];
+  if(!room){ wizState.stage='summary'; renderWizard(); return ''; }
+  const doneIdx = activeRooms.findIndex(r=>r.id===room.id);
+  const total = activeRooms.length;
+
+  // Template jobs for this room — with checkboxes, ticked by default
+  const allTemplateJobs = Object.values(state.jobs)
+    .filter(j=>j.room===room.room && j.tier!=='stepchange');
+  const skipped = wizState.skippedTemplateJobs[room.id] || [];
+  const skippedSet = new Set(skipped);
+
+  const templateSection = allTemplateJobs.length ? `
+    <div class="wiz-template-jobs">
+      <div class="wiz-template-label">Already in your system — untick anything that doesn't apply</div>
+      ${allTemplateJobs.map(j=>`
+        <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;">
+          <input type="checkbox" ${skippedSet.has(j.id)?'':'checked'} onchange="wizToggleTemplate('${room.id}','${j.id}',this.checked)"
+            style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0;">
+          <span style="font-size:12px;color:${skippedSet.has(j.id)?'var(--slate2)':'var(--ink)'};font-weight:300;text-decoration:${skippedSet.has(j.id)?'line-through':'none'}">${j.title}</span>
+        </label>`).join('')}
+    </div>` : '';
+
+  const extracted = wizState.extractedJobs[room.id] || [];
+  const hasExtracted = extracted.length > 0;
+  const savedNote = wizState.roomNotes[room.id] || '';
+
+  const extractedSection = hasExtracted ? `
+    <div class="wiz-extracted">
+      <div class="wiz-extracted-label">Jobs found — edit or delete anything</div>
+      <div id="wiz-job-list-${room.id}">
+        ${extracted.map((j,i)=>wizJobRowHTML(room.id,i,j.text,j.freq)).join('')}
+      </div>
+      <div class="wiz-add-row">
+        <input class="wiz-add-input" id="wiz-add-${room.id}" placeholder="Add a job I missed…" onkeydown="if(event.key==='Enter')wizAddJob('${room.id}')">
+        <button class="wiz-add-btn" onclick="wizAddJob('${room.id}')">+</button>
+      </div>
+    </div>` : `<div id="wiz-extracted-area-${room.id}"></div>`;
+
+  const pips = activeRooms.map(r=>{
+    const isDone = wizState.roomsDone.has(r.id);
+    const isActive = r.id === room.id;
+    return `<button class="wiz-pip ${isDone?'done':isActive?'active':''}">${r.icon} ${r.name}</button>`;
+  }).join('');
+
+  return `
+    <div class="wiz-pip-strip" id="wiz-pip-strip">${pips}</div>
+    <div class="wiz-body" style="padding-top:20px;">
+      <div class="wiz-eyebrow">Room ${doneIdx+1} of ${total}</div>
+      <div class="wiz-room-card">
+        <div class="wiz-room-card-header">
+          <span class="room-icon">${room.icon}</span>
+          <div>
+            <div class="wiz-room-card-title">${room.name}</div>
+            <div class="wiz-room-card-sub">${room.prompts}</div>
+          </div>
+        </div>
+        ${templateSection}
+        <div class="wiz-chips">
+          ${room.chips.map(c=>`<button class="wiz-chip" onclick="wizAppendChip('${room.id}','${c}')">${c}</button>`).join('')}
+        </div>
+        <textarea class="wiz-textarea" id="wiz-ta-${room.id}"
+          placeholder="Anything specific to your ${room.name.toLowerCase()}? Tap chips above or just type…"
+        >${savedNote}</textarea>
+        <div class="wiz-room-actions">
+          <button class="wiz-btn-analyse" id="wiz-analyse-${room.id}" onclick="wizAnalyseRoom('${room.id}')">
+            ${hasExtracted?'Re-analyse →':'Find additional jobs →'}
+          </button>
+          <button class="wiz-btn-skip" onclick="wizSkipRoom()">Skip</button>
+        </div>
+        ${extractedSection}
+      </div>
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-back" onclick="wizRoomBack()">←</button>
+      <button class="wiz-btn-pause" onclick="pauseWizard()">⏸</button>
+      <button class="wiz-btn-next" onclick="wizSaveRoom('${room.id}')">Save & next →</button>
+    </div>
+  `;
+}
+
+function wizToggleTemplate(roomId, jobId, checked){
+  if(!wizState.skippedTemplateJobs[roomId]) wizState.skippedTemplateJobs[roomId] = [];
+  const skipped = wizState.skippedTemplateJobs[roomId];
+  if(!checked){
+    if(!skipped.includes(jobId)) skipped.push(jobId);
+    // Mark job as hidden in state
+    if(state.jobs[jobId]) state.jobs[jobId].wizSkipped = true;
+  } else {
+    const idx = skipped.indexOf(jobId);
+    if(idx>-1) skipped.splice(idx,1);
+    if(state.jobs[jobId]) delete state.jobs[jobId].wizSkipped;
+  }
+  // Update visual immediately without full re-render
+  const label = document.querySelector(`input[onchange*="${jobId}"]`);
+  if(label){
+    const span = label.parentElement.querySelector('span');
+    if(span){
+      span.style.color = checked ? 'var(--ink)' : 'var(--slate2)';
+      span.style.textDecoration = checked ? 'none' : 'line-through';
+    }
+  }
+  persistWizState();
+  saveState();
+}
+
+function wizAppendChip(roomId, chip){
+  const ta = document.getElementById(`wiz-ta-${roomId}`);
+  if(ta){ ta.value += (ta.value&&!ta.value.endsWith(' ')?'. ':'')+chip+': '; ta.focus(); }
+}
+
+async function wizAnalyseRoom(roomId){
+  const ta = document.getElementById(`wiz-ta-${roomId}`);
+  const text = ta ? ta.value.trim() : '';
+  wizState.roomNotes[roomId] = text;
+
+  const room = WIZ_ROOMS.find(r=>r.id===roomId);
+  const btn = document.getElementById(`wiz-analyse-${roomId}`);
+  if(btn){ btn.disabled=true; btn.textContent='Finding jobs…'; }
+
+  const area = document.getElementById(`wiz-extracted-area-${roomId}`) ||
+               document.querySelector('.wiz-extracted');
+  if(area) area.innerHTML = `<div class="wiz-loading"><div class="wiz-spinner"></div>Reading what you said…</div>`;
+
+  // Parse the text into jobs without AI — match keywords to known job patterns
+  // This works offline and requires no API key
+  const keywords = {
+    'grout':       {text:'Re-grout tiles',freq:'annually'},
+    'sealant':     {text:'Re-seal around bath/sink',freq:'annually'},
+    'mould':       {text:'Treat mould',freq:'monthly'},
+    'damp':        {text:'Check and treat damp',freq:'monthly'},
+    'crack':       {text:'Fill and paint cracks',freq:'one-off'},
+    'paint':       {text:'Repaint walls',freq:'annually'},
+    'declutter':   {text:'Full declutter',freq:'quarterly'},
+    'clutter':     {text:'Clear clutter',freq:'monthly'},
+    'cable':       {text:'Tidy and route cables',freq:'one-off'},
+    'window':      {text:'Clean windows inside and out',freq:'quarterly'},
+    'blind':       {text:'Clean blinds',freq:'monthly'},
+    'curtain':     {text:'Wash curtains',freq:'annually'},
+    'carpet':      {text:'Deep clean carpet',freq:'quarterly'},
+    'floor':       {text:'Scrub floor properly',freq:'monthly'},
+    'skirting':    {text:'Scrub skirting boards',freq:'monthly'},
+    'radiator':    {text:'Deep clean radiator',freq:'monthly'},
+    'vent':        {text:'Clean vent / extractor',freq:'monthly'},
+    'cupboard':    {text:'Clear and wipe cupboard inside',freq:'quarterly'},
+    'drawer':      {text:'Declutter drawers',freq:'quarterly'},
+    'shelf':       {text:'Clear and wipe shelves',freq:'monthly'},
+    'door':        {text:'Sand and repaint door',freq:'one-off'},
+    'hinge':       {text:'Fix door hinges',freq:'one-off'},
+    'handle':      {text:'Replace door handles',freq:'one-off'},
+    'light':       {text:'Clean light fitting',freq:'monthly'},
+    'bulb':        {text:'Replace light bulb',freq:'one-off'},
+    'cobweb':      {text:'Clear cobwebs',freq:'monthly'},
+    'dust':        {text:'Dust all surfaces',freq:'fortnightly'},
+    'mirror':      {text:'Clean mirror properly',freq:'fortnightly'},
+    'plug':        {text:'Fix electrical issue',freq:'one-off'},
+    'leak':        {text:'Fix leak — call plumber',freq:'one-off'},
+    'tap':         {text:'Descale taps',freq:'monthly'},
+    'limescale':   {text:'Descale fixtures',freq:'monthly'},
+    'shower':      {text:'Deep clean shower',freq:'fortnightly'},
+    'bath':        {text:'Scrub bath properly',freq:'fortnightly'},
+    'toilet':      {text:'Deep clean toilet',freq:'weekly'},
+    'sink':        {text:'Descale and clean sink',freq:'weekly'},
+    'fridge':      {text:'Deep clean fridge',freq:'quarterly'},
+    'oven':        {text:'Deep clean oven',freq:'quarterly'},
+    'hob':         {text:'Deep clean hob',freq:'monthly'},
+    'extractor':   {text:'Clean extractor fan and filter',freq:'monthly'},
+    'microwave':   {text:'Clean microwave inside',freq:'fortnightly'},
+    'bin':         {text:'Clean and disinfect bin',freq:'monthly'},
+    'wardrobe':    {text:'Clear and organise wardrobe',freq:'quarterly'},
+    'storage':     {text:'Sort and reorganise storage',freq:'quarterly'},
+    'weed':        {text:'Weed this area',freq:'monthly'},
+    'jetwash':     {text:'Jetwash this area',freq:'annually'},
+    'fence':       {text:'Repair and treat fence',freq:'annually'},
+    'gutter':      {text:'Clear gutters',freq:'annually'},
+  };
+
+  const lowerText = text.toLowerCase();
+  const foundJobs = [];
+  const seen = new Set();
+
+  // Check each keyword against the typed text
+  Object.entries(keywords).forEach(([kw, job])=>{
+    if(lowerText.includes(kw) && !seen.has(job.text)){
+      foundJobs.push({...job});
+      seen.add(job.text);
+    }
+  });
+
+  // Also parse any lines that look like job descriptions
+  const lines = text.split(/[.,\n]+/).map(l=>l.trim()).filter(l=>l.length>5&&l.length<80);
+  lines.forEach(line=>{
+    const clean = line.replace(/^[-•*]\s*/,'').trim();
+    if(clean && !seen.has(clean) && foundJobs.length < 15){
+      // Only add if it doesn't look like a keyword match already covers it
+      const alreadyCovered = Object.keys(keywords).some(kw=>clean.toLowerCase().includes(kw));
+      if(!alreadyCovered){
+        foundJobs.push({text:clean.charAt(0).toUpperCase()+clean.slice(1),freq:'monthly'});
+        seen.add(clean);
+      }
+    }
+  });
+
+  if(!foundJobs.length){
+    // Nothing found — still show an empty editable list so they can add manually
+    foundJobs.push({text:'',freq:'monthly'});
+  }
+
+  wizState.extractedJobs[roomId] = foundJobs;
+  persistWizState();
+  renderWizard();
+}
+
+function wizJobRowHTML(roomId, i, text, freq){
+  const freqs=['daily','weekly','fortnightly','monthly','quarterly','annually','one-off'];
+  return `<div class="wiz-job-row" id="wiz-row-${roomId}-${i}">
+    <input class="wiz-job-input" id="wiz-jt-${roomId}-${i}" value="${text.replace(/"/g,'&quot;')}">
+    <select class="wiz-job-freq" id="wiz-jf-${roomId}-${i}">
+      ${freqs.map(f=>`<option value="${f}" ${freq===f?'selected':''}>${f}</option>`).join('')}
+    </select>
+    <button class="wiz-job-del" onclick="wizDelJob('${roomId}',${i})">×</button>
+  </div>`;
+}
+
+function wizDelJob(roomId,i){
+  const row = document.getElementById(`wiz-row-${roomId}-${i}`);
+  if(row) row.remove();
+}
+
+function wizAddJob(roomId){
+  const inp = document.getElementById(`wiz-add-${roomId}`);
+  if(!inp||!inp.value.trim()) return;
+  const list = document.getElementById(`wiz-job-list-${roomId}`);
+  if(!list) return;
+  const idx = Date.now();
+  const div = document.createElement('div');
+  div.innerHTML = wizJobRowHTML(roomId,idx,inp.value.trim(),'monthly');
+  list.appendChild(div.firstElementChild);
+  inp.value='';
+}
+
+function wizCollectJobs(roomId){
+  const rows = document.querySelectorAll(`[id^="wiz-row-${roomId}-"]`);
+  const jobs=[];
+  rows.forEach(row=>{
+    const idx=row.id.replace(`wiz-row-${roomId}-`,'');
+    const t=document.getElementById(`wiz-jt-${roomId}-${idx}`);
+    const f=document.getElementById(`wiz-jf-${roomId}-${idx}`);
+    if(t&&t.value.trim()) jobs.push({text:t.value.trim(),freq:f?f.value:'monthly'});
+  });
+  return jobs;
+}
+
+function wizSaveRoom(roomId){
+  captureWizTextarea();
+  if(wizState.extractedJobs[roomId]){
+    wizState.extractedJobs[roomId] = wizCollectJobs(roomId);
+  }
+  wizState.roomsDone.add(roomId);
+  persistWizState();
+  wizNextRoom();
+}
+
+function wizSkipRoom(){
+  captureWizTextarea();
+  wizNextRoom();
+}
+
+function wizNextRoom(){
+  wizState.currentRoomIdx++;
+  while(wizState.currentRoomIdx < WIZ_ROOMS.length &&
+        wizState.excludedRooms.has(WIZ_ROOMS[wizState.currentRoomIdx].id)){
+    wizState.currentRoomIdx++;
+  }
+  if(wizState.currentRoomIdx >= WIZ_ROOMS.length) wizState.stage='summary';
+  persistWizState();
+  renderWizard();
+}
+
+function wizRoomBack(){
+  captureWizTextarea();
+  if(wizState.currentRoomIdx===0){ wizState.stage='rooms-select'; renderWizard(); return; }
+  wizState.currentRoomIdx--;
+  while(wizState.currentRoomIdx>0 && wizState.excludedRooms.has(WIZ_ROOMS[wizState.currentRoomIdx].id)){
+    wizState.currentRoomIdx--;
+  }
+  persistWizState();
+  renderWizard();
+}
+
+// ── STAGE 4: SUMMARY ───────────────────────────────────────────────────────
+function renderWizSummary(){
+  const allNew = Object.values(wizState.extractedJobs).flat();
+  const byRoom = WIZ_ROOMS.filter(r=>wizState.extractedJobs[r.id]&&wizState.extractedJobs[r.id].length);
+  const totalExisting = Object.values(state.jobs).filter(j=>j.tier!=='stepchange'&&!j.wizSkipped).length;
+  const skippedCount = Object.values(state.jobs).filter(j=>j.wizSkipped).length;
+
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">Step 4 of 4</div>
+      <h1 class="wiz-title">Almost <em>there</em></h1>
+      <p class="wiz-sub">Here's what we found. New jobs will be added alongside your existing list.</p>
+      <div class="wiz-summary-grid">
+        <div class="wiz-summary-card">
+          <div class="wiz-summary-num">${allNew.length}</div>
+          <div class="wiz-summary-lbl">New jobs found</div>
+        </div>
+        <div class="wiz-summary-card">
+          <div class="wiz-summary-num">${totalExisting}</div>
+          <div class="wiz-summary-lbl">In your system</div>
+        </div>
+      </div>
+      ${skippedCount ? `<div style="font-size:12px;color:var(--slate);padding:8px 0;font-weight:300;">${skippedCount} existing job${skippedCount!==1?'s':''} hidden — they're still in the background if you need them.</div>` : ''}
+      ${byRoom.map(r=>`
+        <div class="wiz-room-summary">
+          <span class="wiz-room-summary-name">${r.icon} ${r.name}</span>
+          <span class="wiz-room-summary-count">${wizState.extractedJobs[r.id].length} new job${wizState.extractedJobs[r.id].length!==1?'s':''}</span>
+        </div>`).join('')}
+      ${!byRoom.length ? `<div style="text-align:center;padding:20px;color:var(--slate);font-size:13px;font-weight:300;">No new jobs added — your existing list is your starting point.</div>` : ''}
+      ${wizState.whyStatement ? `
+        <div class="wiz-why-preview" style="margin-top:20px;">
+          <div class="wiz-why-label">Your why</div>
+          <div class="wiz-why-text">${wizState.whyStatement}</div>
+        </div>` : ''}
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-back" onclick="wizState.stage='rooms-walk';wizState.currentRoomIdx=0;renderWizard()">← Back</button>
+      <button class="wiz-btn-next" onclick="wizConfirm()">Add to Hearth →</button>
+    </div>
+  `;
+}
+
+function wizConfirm(){
+  const FREQ_MAP = {daily:'daily',weekly:'weekly',fortnightly:'fortnightly',monthly:'monthly',quarterly:'quarterly',annually:'annually','one-off':'one-off'};
+  const TIER_MAP = {daily:'micro',weekly:'micro',fortnightly:'micro',monthly:'small',quarterly:'small',annually:'large','one-off':'large'};
+  WIZ_ROOMS.forEach(wr=>{
+    (wizState.extractedJobs[wr.id]||[]).forEach((j,i)=>{
+      if(!j.text.trim()) return;
+      const id=`wiz_${wr.id}_${Date.now()}_${i}`;
+      const freq=FREQ_MAP[j.freq]||'monthly';
+      state.jobs[id]={
+        id,title:j.text,room:wr.room,tier:TIER_MAP[freq]||'small',
+        freq,mins:30,notes:'',equip:[],
+        last_done:null,assigned_to:'me',reset_count:0,
+        status:'active',assigned_date:null,chunks:[],
+      };
+    });
+  });
+  state.mission = {...wizState.mission};
+  state.whyStatement = wizState.whyStatement;
+  state.wizardDone = true;
+  state.wizState = null; // clear saved wizard progress
+  saveState();
+  wizState.stage='welcome';
+  renderWizard();
+}
+
+// ── STAGE 5: WELCOME ───────────────────────────────────────────────────────
+function renderWizWelcome(){
+  return `
+    <div class="wiz-body">
+      <div class="wiz-eyebrow">You're all set</div>
+      <h1 class="wiz-title">Welcome to <em>Hearth</em></h1>
+      <p class="wiz-sub" style="margin-bottom:24px;">Here's how it works. You don't need to remember all of this.</p>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">📋</div>
+        <div>
+          <div class="wiz-welcome-title">Dispatch</div>
+          <div class="wiz-welcome-desc">Your daily view. Shows what's due, prioritised by how overdue it is. Tap "Not now" to skip, "Roulette me" to see something different.</div>
+        </div>
+      </div>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">🎲</div>
+        <div>
+          <div class="wiz-welcome-title">Roulette</div>
+          <div class="wiz-welcome-desc">Pick how long you've got and spin. Good for when you want to do something without deciding what.</div>
+        </div>
+      </div>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">▶</div>
+        <div>
+          <div class="wiz-welcome-title">Do a bit</div>
+          <div class="wiz-welcome-desc">Big jobs are split into 20-minute parts. Tick one part at a time — no need to commit to the whole thing.</div>
+        </div>
+      </div>
+      <div class="wiz-welcome-feature">
+        <div class="wiz-welcome-icon">💡</div>
+        <div>
+          <div class="wiz-welcome-title">Step Change</div>
+          <div class="wiz-welcome-desc">Decisions that unlock everything else. One per fortnight — small thinking, permanent improvements.</div>
+        </div>
+      </div>
+      ${wizState.whyStatement ? `
+        <div class="wiz-why-preview" style="margin-top:20px;">
+          <div class="wiz-why-label">Keep this in mind</div>
+          <div class="wiz-why-text">${wizState.whyStatement}</div>
+        </div>` : ''}
+    </div>
+    <div class="wiz-nav">
+      <button class="wiz-btn-next" onclick="closeWizard();renderDispatch();renderWhyBar();">Go to Hearth →</button>
+    </div>
+  `;
+}
+
+
   {id:'kitchen',name:'Kitchen',icon:'🍳',room:'Kitchen',
    prompts:'Look at every surface, cupboard, appliance. What\'s been annoying you silently?',
    chips:['Cupboards inside','Under the sink','Appliances','Tiles / grout','Sealant','Extractor fan','Fridge seals','Bin area','Worktops','Hob / oven']},
@@ -2772,6 +3524,7 @@ function renderWizWelcome(){
 
 // ── EXPOSE WIZARD GLOBALS ──────────────────────────────────────────────────
 window.launchWizard = launchWizard;
+window.launchWizardAtStage = launchWizardAtStage;
 window.closeWizard = closeWizard;
 window.pauseWizard = pauseWizard;
 window.renderWizard = renderWizard;
@@ -2788,6 +3541,10 @@ window.wizSkipRoom = wizSkipRoom;
 window.wizNextRoom = wizNextRoom;
 window.wizRoomBack = wizRoomBack;
 window.wizConfirm = wizConfirm;
+window.wizToggleTemplate = wizToggleTemplate;
+window.addAssignee = addAssignee;
+window.removeAssignee = removeAssignee;
+window.updateAssignee = updateAssignee;
 
 window.showTab = showTab;
 window.setTime = setTime;
