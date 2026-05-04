@@ -1357,8 +1357,8 @@ function showKeySetup(){
       <div style="font-family:'DM Serif Display',serif;font-size:28px;color:#1C1812;margin-bottom:6px;"><em style="color:#D4785A;">Hearth</em></div>
       <div style="font-size:13px;color:#7A6A55;margin-bottom:28px;font-weight:300;line-height:1.5;">Your data lives in the cloud now.<br>Choose a personal key to identify your account.</div>
       <div style="text-align:left;margin-bottom:16px;">
-        <label style="font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#7A6A55;display:block;margin-bottom:6px;">Your key — something memorable</label>
-        <input id="key-input" placeholder="e.g. sunflower-house-42" style="width:100%;border:1.5px solid #E2D9C8;border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#1C1812;background:#fff;outline:none;" autocomplete="off" autocapitalize="off">
+        <label for="key-input" style="font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#7A6A55;display:block;margin-bottom:6px;">Your key — something memorable</label>
+        <input id="key-input" placeholder="tap here and type e.g. sunflower-house-42" style="width:100%;border:1.5px solid #E2D9C8;border-radius:8px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;color:#1C1812;background:#fff;outline:none;cursor:text;display:block;" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
         <div style="font-size:11px;color:#9A8A75;margin-top:6px;line-height:1.5;">Not a password — just a phrase you'll remember. Lowercase, no spaces. This is how Hearth finds your data on any device.</div>
       </div>
       <button id="key-submit-btn" style="width:100%;background:#B85C3A;color:white;border:none;border-radius:8px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;margin-bottom:10px;">Start Hearth →</button>
@@ -2712,7 +2712,7 @@ function initState(){
       if(j.status==='assigned') return;
       const window = SCATTER_FREQS[j.freq];
       if(!window) return;
-      const daysAgo = Math.floor(Math.random() * window);
+      const daysAgo = Math.max(1, Math.floor(Math.random() * window));
       const d = new Date();
       d.setDate(d.getDate() - daysAgo);
       j.last_done = d.toISOString().split('T')[0];
