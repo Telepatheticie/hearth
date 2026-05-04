@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hearth">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Hearth</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
@@ -930,6 +934,7 @@ const JOB_LIBRARY = [
 // Master room types — each has a display name, icon, and suggested job type IDs
 const ROOM_TYPES = [
   {typeId:'kitchen',     name:'Kitchen',          icon:'🍳', suggestedJobs:['clear-reset','wipe-surfaces','clean-sink-k','wipe-down','mop-floor','hoover-floor','clean-bin','clean-hob','clean-oven','clean-fridge','clean-appliance','descale-appliance','descale-taps-k','wipe-appliances','dust-skirting','scrub-skirting','clean-windows-int','test-smoke','test-co','repair-fixtures','touch-up-paint','repaint-room']},
+  {typeId:'dining-room', name:'Dining Room',       icon:'🍽️', suggestedJobs:['clear-reset','wipe-surfaces','hoover-floor','mop-floor','dust-furniture','dust-skirting','scrub-skirting','dust-shelving','dust-pictures','wipe-windowsill','clean-windows-int','dust-light','empty-bin','declutter-drawer','repair-fixtures','touch-up-paint','repaint-room']},
   {typeId:'bathroom',    name:'Bathroom',          icon:'🚿', suggestedJobs:['clean-toilet','clean-sink','clean-shower','clean-shower-door','descale-taps','mop-floor','sweep-floor','tidy-caddy','change-mats','empty-bin','clean-bin','treat-mould','check-damp','clean-vent','clean-mirror','wipe-windowsill','dust-skirting','scrub-skirting','clean-windows-int','test-lights','regrout-tiling','replace-sealant','repaint-room','paint-ceilings']},
   {typeId:'bedroom',     name:'Bedroom',           icon:'🛏️', suggestedJobs:['clear-reset','hoover-floor','change-bedding','dust-furniture','dust-skirting','scrub-skirting','wipe-windowsill','clean-mirror','dust-light','dust-pictures','dust-shelving','empty-bin','clean-windows-int','edit-wardrobe','declutter-drawer','treat-mould','check-damp','clean-radiator','clean-vent','test-smoke','touch-up-paint','repaint-room']},
   {typeId:'living-room', name:'Living Room',       icon:'🛋️', suggestedJobs:['clear-reset','hoover-floor','mop-floor','wipe-surfaces','dust-furniture','dust-skirting','scrub-skirting','dust-shelving','dust-pictures','clean-mirror','wipe-windowsill','clean-windows-int','dust-light','remove-cobwebs','empty-bin','treat-mould','clean-radiator','declutter-drawer','repair-fixtures','touch-up-paint','repaint-room']},
@@ -1397,9 +1402,14 @@ async function confirmUserKey(){
     if(overlay) overlay.remove();
     initState();
     renderDispatch();
+    if(state.whyStatement) renderWhyBar();
     setSyncDot('synced');
     const keyDisplay = document.getElementById('account-key-display');
     if(keyDisplay) keyDisplay.textContent = userKey;
+    // Launch wizard for new users
+    if(!state.wizardDone){
+      setTimeout(()=>launchWizard(), 400);
+    }
   } catch(err){
     errEl.textContent = 'Could not connect — check your internet and try again.';
     btn.textContent = 'Start Hearth →';
@@ -2713,7 +2723,8 @@ function guessRoomType(name){
   if(n.includes('kitchen')) return 'kitchen';
   if(n.includes('bath') || n.includes('shower') || n.includes('loo') || n.includes('toilet')) return 'bathroom';
   if(n.includes('bed') || n.includes('room') || n.includes('master') || n.includes('guest')) return 'bedroom';
-  if(n.includes('living') || n.includes('lounge') || n.includes('sitting') || n.includes('dining')) return 'living-room';
+  if(n.includes('living') || n.includes('lounge') || n.includes('sitting')) return 'living-room';
+  if(n.includes('dining')) return 'dining-room';
   if(n.includes('hall') || n.includes('stair') || n.includes('landing') || n.includes('porch') || n.includes('entry')) return 'hallway';
   if(n.includes('office') || n.includes('study')) return 'office';
   if(n.includes('utility') || n.includes('laundry') || n.includes('pantry') || n.includes('store')) return 'utility';
@@ -2932,6 +2943,7 @@ function renderWizRoomsSelect(){
       wizState.roomInstances = [
         {typeId:'kitchen',     name:'Kitchen',          instanceId:'wiz_kitchen_1',    active:true},
         {typeId:'living-room', name:'Living Room',      instanceId:'wiz_living_1',     active:true},
+        {typeId:'dining-room', name:'Dining Room',      instanceId:'wiz_dining_1',     active:true},
         {typeId:'hallway',     name:'Hallway & Stairs', instanceId:'wiz_hallway_1',    active:true},
         {typeId:'bedroom',     name:'Main Bedroom',     instanceId:'wiz_bedroom_1',    active:true},
         {typeId:'bathroom',    name:'Bathroom',         instanceId:'wiz_bath_1',       active:true},
@@ -3211,6 +3223,23 @@ function wizCollectJobs(instanceId){
   return jobs;
 }
 
+function getChipsForType(typeId){
+  const chipMap = {
+    'kitchen':     ['Grout / sealant','Mould','Extractor fan','Under sink','Cupboards inside','Hob / oven','Worktops','Skirting','Bin area','Windows'],
+    'dining-room': ['Table surface','Skirting boards','Windows / sills','Shelving','Cables','Cupboard inside','Paintwork','Lights'],
+    'living-room': ['Skirting boards','Paintwork','Windows / sills','Behind sofa','Lights','Clutter zones','Cables','Fireplace'],
+    'hallway':     ['Front door area','Shoe clutter','Coat hooks','Banisters','Stair carpet','Wall scuffs','Light fitting','Under stairs'],
+    'bedroom':     ['Under bed','Wardrobe inside','Skirting','Windows','Paintwork','Curtains / blinds','Ceiling light','That chair'],
+    'bathroom':    ['Grout / sealant','Around bath / shower','Extractor fan','Mirror','Taps / limescale','Cabinet inside','Flooring','Towel rail'],
+    'utility':     ['Behind washer / dryer','Sink','Shelving','Airer area','Floor','Cupboards'],
+    'office':      ['Desk surface','Cables','Shelving','Paintwork','Windows','Floor','Clutter'],
+    'garden':      ['Garden tidying','Fences / gates','Driveway','Gutters','Outside lights','Paths'],
+    'other':       ['Skirting boards','Paintwork','Windows','Clutter','Lights','Floor','Cupboards'],
+  };
+  return chipMap[typeId] || chipMap['other'];
+}
+
+
 function wizSaveRoom(instanceId){
   captureWizTextarea();
   if(wizState.extractedJobs[instanceId]) wizState.extractedJobs[instanceId]=wizCollectJobs(instanceId);
@@ -3360,7 +3389,7 @@ function renderWizWelcome(){
       ${wizState.whyStatement?`<div class="wiz-why-preview" style="margin-top:20px;"><div class="wiz-why-label">Keep this in mind</div><div class="wiz-why-text">${wizState.whyStatement}</div></div>`:''}
     </div>
     <div class="wiz-nav">
-      <button class="wiz-btn-next" onclick="closeWizard();initState();renderDispatch();renderWhyBar();">Go to Hearth →</button>
+      <button class="wiz-btn-next" onclick="closeWizard();initState();renderDispatch();renderWhyBar();renderRooms();">Go to Hearth →</button>
     </div>
   `;
 }
