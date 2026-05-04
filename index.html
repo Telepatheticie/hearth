@@ -704,7 +704,7 @@ body{
 <body>
 
 <div class="nav">
-  <div class="nav-logo"><em>Hearth</em> <span style="font-size:11px;color:rgba(212,120,90,0.5);font-family:'DM Sans',sans-serif;font-weight:300;letter-spacing:0.05em;">v6.0</span></div>
+  <div class="nav-logo"><em>Hearth</em> <span style="font-size:11px;color:rgba(212,120,90,0.5);font-family:'DM Sans',sans-serif;font-weight:300;letter-spacing:0.05em;">v6.02</span></div>
   <div style="display:flex;align-items:center;gap:10px;">
     <div id="sync-indicator" style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background 0.5s;" title="Syncing…"></div>
     <div class="nav-date" id="nav-date"></div>
@@ -769,6 +769,7 @@ body{
 <!-- SETTINGS -->
 <div id="tab-settings" class="panel">
   <div class="section-label">Setup & mission</div>
+  <button class="export-btn" style="background:rgba(28,24,18,0.05);color:var(--ink);border-color:var(--warm2);margin-bottom:8px;" onclick="showAbout()">? About Hearth</button>
   <button class="export-btn" style="background:rgba(184,92,58,0.1);color:var(--rust);border-color:rgba(184,92,58,0.3);margin-bottom:8px;" onclick="launchWizardAtStage('mission')">✎ Edit my mission statement</button>
   <button class="export-btn" style="background:rgba(184,92,58,0.1);color:var(--rust);border-color:rgba(184,92,58,0.3);" onclick="launchWizardAtStage('rooms-select')">↺ Re-run room walkthrough</button>
 
@@ -820,12 +821,16 @@ body{
     </label>
   </div>
   <div class="section-label" style="margin-top:28px;">Reset</div>
-  <button class="editor-reset-job" onclick="reScatter()" style="width:100%;margin-bottom:8px;">↺ Re-scatter all job dates (use if everything still shows as due)</button>
+  <button class="editor-reset-job" onclick="resetOverdue()" style="width:100%;margin-bottom:8px;">📅 Reset overdue — reschedule all from today</button>
+  <button class="editor-reset-job" onclick="reScatter()" style="width:100%;margin-bottom:8px;">↺ Re-scatter job dates (overdue/unscheduled only)</button>
   <button class="editor-reset-job" onclick="resetAllData()" style="width:100%;color:#B03030;border-color:#E8C0C0;">⚠ Reset all data — start fresh</button>
 </div>
 
 <!-- WIZARD OVERLAY -->
 <div id="wizard-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:500;overflow-y:auto;"></div>
+
+<!-- ABOUT OVERLAY -->
+<div id="about-overlay" style="display:none;position:fixed;inset:0;background:var(--cream);z-index:600;overflow-y:auto;"></div>
 
 <!-- ASSIGN MODAL -->
 <div class="modal-overlay" id="assign-modal">
@@ -1419,6 +1424,10 @@ function dueDate(job){
 function isDue(job){
   if(job.status==='assigned'||job.status==='done') return false;
   if(job.tier==='stepchange') return false;
+  if(job.wizSkipped) return false;
+  if(job.suppressed_until && job.suppressed_until > today()) return false;
+  if(job.roomId){ const rm=getRoomById(job.roomId); if(rm&&!rm.active) return false; }
+  else if(job.room&&state.rooms&&state.rooms.length){ const rm=state.rooms.find(r=>r.name===job.room); if(rm&&!rm.active) return false; }
   const dd = dueDate(job);
   if(!dd) return false;
   return dd <= today();
@@ -1597,14 +1606,16 @@ function renderDispatch(){
   const due = getDueJobs();
   const assigned = Object.values(state.jobs).filter(j=>j.status==='assigned');
   const total = Object.values(state.jobs).length;
-  const done_today = Object.values(state.jobs).filter(j=>j.last_done===today()).length;
 
   // Ensure subtasks for all jobs
   Object.values(state.jobs).forEach(j=>ensureSubtasks(j));
 
   document.getElementById('stats-bar').innerHTML=`
     <div class="stat-card"><div class="stat-num">${due.length}</div><div class="stat-lbl">Due now</div></div>
-    <div class="stat-card"><div class="stat-num">${done_today}</div><div class="stat-lbl">Done today</div></div>
+    <div class="stat-card" onclick="cyclePeriod()" style="cursor:pointer;" title="Tap to change period">
+      <div class="stat-num">${countDone()}</div>
+      <div class="stat-lbl">${periodLabel()} ↻</div>
+    </div>
     <div class="stat-card"><div class="stat-num">${assigned.length}</div><div class="stat-lbl">Assigned</div></div>
     <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total jobs</div></div>
   `;
@@ -1713,7 +1724,7 @@ function renderJobCard(job, mode){
         <button class="btn btn-roulette" onclick="rouletteMe('${mode}')">Roulette me</button>
       </div>
       <div class="card-actions-row2">
-        <button class="btn btn-later btn-small" onclick="notNow('${job.id}','${mode}')">Not now</button>
+        <button class="btn btn-later btn-small" onclick="notNow('${job.id}','${mode}')">Skip me</button>
         <button class="btn btn-assign btn-small" onclick="openAssignModal('${job.id}')">Assign</button>
         <button class="btn btn-later btn-small" onclick="showInfo('${job.id}')">⋯</button>
       </div>`;
@@ -1735,7 +1746,7 @@ function renderJobCard(job, mode){
         <button class="btn btn-roulette" onclick="rouletteMe('${mode}')">Roulette me</button>
       </div>
       <div class="card-actions-row2">
-        <button class="btn btn-later btn-small" onclick="notNow('${job.id}','${mode}')">Not now</button>
+        <button class="btn btn-later btn-small" onclick="notNow('${job.id}','${mode}')">Skip me</button>
         <button class="btn btn-assign btn-small" onclick="openAssignModal('${job.id}')">Assign</button>
         <button class="btn btn-later btn-small" onclick="showInfo('${job.id}')">⋯</button>
       </div>`;
@@ -1746,7 +1757,7 @@ function renderJobCard(job, mode){
         <button class="btn btn-roulette" onclick="rouletteMe('${mode}')">Roulette me</button>
       </div>
       <div class="card-actions-row2">
-        <button class="btn btn-later btn-small" onclick="notNow('${job._isSubtaskProxy?job._parentId:job.id}','${mode}')">Not now</button>
+        <button class="btn btn-later btn-small" onclick="notNow('${job._isSubtaskProxy?job._parentId:job.id}','${mode}')">Skip me</button>
         <button class="btn btn-assign btn-small" onclick="openAssignModal('${job._isSubtaskProxy?job._parentId:job.id}')">Assign</button>
         <button class="btn btn-later btn-small" onclick="showInfo('${job._isSubtaskProxy?job._parentId:job.id}')">⋯</button>
       </div>`;
@@ -1827,11 +1838,14 @@ function markDone(id, mode){
 }
 
 function notNow(id, mode){
+  // Skip me — defers job to its next due date by setting last_done to today
+  // This means the job disappears from dispatch until genuinely due again
   const job = state.jobs[id];
   if(!job) return;
+  job.last_done = today();
   job.reset_count = (job.reset_count||0)+1;
+  job.scheduled_date = null;
   saveState();
-  // Show scheduling prompt
   pendingScheduleJobId = id;
   if(mode==='dispatch'){ currentDispatchJob=null; renderDispatch(); }
   if(mode==='roulette') spinRoulette();
@@ -1839,8 +1853,75 @@ function notNow(id, mode){
 }
 
 function rouletteMe(mode){
-  if(mode==='dispatch'){ currentDispatchJob=null; renderDispatch(); }
-  else spinRoulette();
+  // Roulette me — suppress current job from dispatch for 48 hours, show something else
+  if(mode==='dispatch' && currentDispatchJob){
+    const job = state.jobs[currentDispatchJob];
+    if(job){
+      job.suppressed_until = addDays(today(), 2);
+      saveState();
+    }
+    currentDispatchJob = null;
+    renderDispatch();
+  } else {
+    spinRoulette();
+  }
+}
+
+function addDays(dateStr, n){
+  const d = new Date(dateStr);
+  d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
+
+// ── RESET OVERDUE ──────────────────────────────────────────────────────────
+function resetOverdue(){
+  if(!confirm('This will reschedule all overdue jobs from today. Your done history is untouched. Continue?')) return;
+  const now = today();
+  Object.values(state.jobs).forEach(j=>{
+    if(!isDue(j)) return;
+    if(j.freq==='one-off'||j.freq==='as needed') return;
+    // Mark as done today so next due = today + frequency
+    j.last_done = now;
+    j.reset_count = 0;
+  });
+  saveState();
+  showToast('Overdue jobs rescheduled from today');
+  renderDispatch();
+}
+
+// ── STATS PERIOD TOGGLE ────────────────────────────────────────────────────
+let statPeriod = 'today'; // 'today' | 'week' | 'month'
+
+function cyclePeriod(){
+  statPeriod = statPeriod==='today' ? 'week' : statPeriod==='week' ? 'month' : 'today';
+  renderDispatch();
+}
+
+function countDone(){
+  const now = today();
+  if(statPeriod==='today'){
+    return Object.values(state.jobs).filter(j=>j.last_done===now).length;
+  }
+  if(statPeriod==='week'){
+    // Monday of current week
+    const d = new Date();
+    const day = d.getDay(); // 0=Sun
+    const diff = (day===0?-6:1-day);
+    d.setDate(d.getDate()+diff);
+    const weekStart = d.toISOString().split('T')[0];
+    return Object.values(state.jobs).filter(j=>j.last_done&&j.last_done>=weekStart&&j.last_done<=now).length;
+  }
+  if(statPeriod==='month'){
+    const monthStart = now.substring(0,7)+'-01';
+    return Object.values(state.jobs).filter(j=>j.last_done&&j.last_done>=monthStart&&j.last_done<=now).length;
+  }
+  return 0;
+}
+
+function periodLabel(){
+  if(statPeriod==='today') return 'Done today';
+  if(statPeriod==='week') return 'Done this week';
+  return 'Done this month';
 }
 
 // ── SCHEDULING ─────────────────────────────────────────────────────────────
@@ -2414,35 +2495,29 @@ function resetJobHistory(id){
 }
 
 function reScatter(){
-  if(!confirm('This will re-randomise all job dates. Any jobs you\'ve marked done recently will be reset. Continue?')) return;
-  state.scattered = false;
-  // Clear all last_done dates for non-large/major/stepchange jobs
-  Object.values(state.jobs).forEach(j=>{
-    const skipTiers = new Set(['large','major','stepchange']);
-    const skipFreqs = new Set(['one-off','as needed']);
-    if(skipTiers.has(j.tier)) return;
-    if(skipFreqs.has(j.freq)) return;
-    j.last_done = null;
-  });
-  // Re-run scatter
+  if(!confirm('This will reschedule jobs that are overdue or have never been done. Recently done jobs are untouched. Continue?')) return;
   const SCATTER_FREQS = {'daily':1,'2-3x week':3,'weekly':7,'fortnightly':14,'monthly':30,'quarterly':91,'annually':365,'seasonal':90};
+  const SKIP_TIERS = new Set(['large','major','stepchange']);
+  const SKIP_FREQS = new Set(['one-off','as needed']);
+  let count = 0;
   Object.values(state.jobs).forEach(j=>{
-    const skipTiers = new Set(['large','major','stepchange']);
-    const skipFreqs = new Set(['one-off','as needed']);
-    if(skipTiers.has(j.tier)) return;
-    if(skipFreqs.has(j.freq)) return;
+    if(SKIP_TIERS.has(j.tier)) return;
+    if(SKIP_FREQS.has(j.freq)) return;
     if(j.status==='assigned') return;
+    // Only touch jobs that are currently overdue or never done
+    if(j.last_done && !isDue(j)) return; // recently done — leave alone
     const window = SCATTER_FREQS[j.freq];
     if(!window) return;
     const daysAgo = Math.floor(Math.random()*window);
     const d = new Date();
     d.setDate(d.getDate()-daysAgo);
     j.last_done = d.toISOString().split('T')[0];
+    count++;
   });
   state.scattered = true;
   saveState();
-  showToast('Dates re-scattered');
-  renderSettings();
+  showToast(`${count} job${count!==1?'s':''} rescheduled`);
+  renderDispatch();
 }
 
 function switchAccount(){
@@ -2794,7 +2869,7 @@ function renderWizMission(){
     <div class="wiz-body">
       <div class="wiz-eyebrow">Step 1 of 4</div>
       <h1 class="wiz-title">Start with <em>why</em></h1>
-      <p class="wiz-sub">Before jobs and frequencies, take a moment. The most important thing is knowing what you're doing this for.</p>
+      <p class="wiz-sub">Before jobs and frequencies, take a moment. The most important thing is knowing what you're doing this for. <button onclick="showAbout()" style="background:none;border:none;color:var(--rust);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline;padding:0;">New to Hearth?</button></p>
       <div class="wiz-question">
         <label>What does your home feel like right now?</label>
         <textarea id="wiz-now" placeholder="Chaotic. Overwhelming. Like I'm always behind…" oninput="wizState.mission.now=this.value;updateWizWhy()">${m.now||''}</textarea>
@@ -2805,7 +2880,7 @@ function renderWizMission(){
       </div>
       <div class="wiz-question">
         <label>How will you know it's working?</label>
-        <textarea id="wiz-know" placeholder="I'll stop dreading people coming over…" oninput="wizState.mission.know=this.value;updateWizWhy()">${m.know||''}</textarea>
+        <textarea id="wiz-know" placeholder="I'll stop dreading people coming over. The house will feel like ours…" oninput="wizState.mission.know=this.value;updateWizWhy()">${m.know||''}</textarea>
       </div>
       <div id="wiz-why-preview" style="${wizState.whyStatement?'':'display:none'}">
         <div class="wiz-why-preview">
@@ -3280,7 +3355,7 @@ function renderWizWelcome(){
       <p class="wiz-sub" style="margin-bottom:24px;">Here's how it works.</p>
       <div class="wiz-welcome-feature"><div class="wiz-welcome-icon">📋</div><div><div class="wiz-welcome-title">Dispatch</div><div class="wiz-welcome-desc">Your daily view. What's due, prioritised by how overdue it is. Tap "Not now" to skip, "Roulette me" to see something different.</div></div></div>
       <div class="wiz-welcome-feature"><div class="wiz-welcome-icon">🎲</div><div><div class="wiz-welcome-title">Roulette</div><div class="wiz-welcome-desc">Pick how long you've got and spin. Good for when you want to do something without deciding what.</div></div></div>
-      <div class="wiz-welcome-feature"><div class="wiz-welcome-icon">💡</div><div><div class="wiz-welcome-title">Step Change</div><div class="wiz-welcome-desc">Decisions that unlock everything else. One per fortnight — small thinking, permanent improvements.</div></div></div>
+      <div class="wiz-welcome-feature"><div class="wiz-welcome-icon">💡</div><div><div class="wiz-welcome-title">Step Change</div><div class="wiz-welcome-desc">One fortnight, one decision. Not a cleaning task — a short focused thought that unblocks something permanently. <em>"Agree where the ladders live"</em> takes ten minutes and means the storage room can finally be sorted. These are the small decisions that, once made, stay made — and quietly transform how a space works.</div></div></div>
       <div class="wiz-welcome-feature"><div class="wiz-welcome-icon">🏠</div><div><div class="wiz-welcome-title">No baggage</div><div class="wiz-welcome-desc">Hearth doesn't count what you haven't done. Only what you have. Jobs reset each cycle — you move forward, not backward.</div></div></div>
       ${wizState.whyStatement?`<div class="wiz-why-preview" style="margin-top:20px;"><div class="wiz-why-label">Keep this in mind</div><div class="wiz-why-text">${wizState.whyStatement}</div></div>`:''}
     </div>
@@ -3289,6 +3364,81 @@ function renderWizWelcome(){
     </div>
   `;
 }
+// ── ABOUT ──────────────────────────────────────────────────────────────────
+function showAbout(){
+  const overlay = document.getElementById('about-overlay');
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  overlay.innerHTML = `
+    <div style="max-width:480px;margin:0 auto;padding-bottom:80px;">
+      <div style="background:var(--ink);padding:20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--cream);"><em style="color:var(--rust2);">Hearth</em></div>
+        <button onclick="closeAbout()" style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:24px;cursor:pointer;line-height:1;">×</button>
+      </div>
+      <div style="padding:28px 20px;">
+        <h1 style="font-family:'DM Serif Display',serif;font-size:30px;color:var(--ink);line-height:1.2;margin-bottom:6px;">Less guilt.<br><em style="color:var(--rust2);">More home.</em></h1>
+        <p style="font-size:13px;color:var(--slate);font-weight:300;line-height:1.7;margin-bottom:28px;">A different kind of home system.</p>
+        <p style="font-size:14px;color:var(--ink);font-weight:300;line-height:1.75;margin-bottom:16px;">Most household apps make you feel behind before you've even started. A wall of undone tasks. A growing backlog. The quiet sense that you're failing at something you never quite agreed to do.</p>
+        <p style="font-size:14px;color:var(--ink);font-weight:300;line-height:1.75;margin-bottom:16px;">Hearth works differently.</p>
+        <p style="font-size:14px;color:var(--ink);font-weight:300;line-height:1.75;margin-bottom:28px;">Every task you complete is a small gift to your future self — a freshly changed bed waiting for you at the end of a long day, a favourite chair that's always clear and ready to curl up in. The goal isn't a perfect home. It's a home that feels manageable, most of the time, without the weight of everything you haven't done sitting on your chest.</p>
+        <div style="background:var(--ink);border-radius:var(--r);padding:18px 20px;margin-bottom:28px;border-left:3px solid var(--rust2);">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">The principle</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--cream);font-style:italic;line-height:1.5;">No guilt. No judgement. No backlog. Just small, doable things — when you have time for them.</div>
+        </div>
+        <div style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:14px;">Three ways people use Hearth</div>
+        ${[
+          ['To reclaim their time','You have twenty minutes. Spin the roulette, pick your bracket, do the thing. Hearth matches jobs to the time you actually have, rather than presenting everything at once and leaving you paralysed.'],
+          ['To build quiet momentum','Knowing the bed gets changed every week without having to think about it, that your favourite corner of the sofa is always clear when you need it — not after a guilty scramble. Hearth turns vague guilt into a manageable rhythm.'],
+          ['To stop dreading it','Some tasks feel enormous until you start. Hearth breaks them into chunks small enough to actually do — steps you can pick up and put down without losing your place. Future you will be glad you did ten minutes today.'],
+        ].map(([title,desc])=>`
+          <div style="background:var(--card);border-radius:var(--r2);padding:16px;margin-bottom:10px;border:1px solid var(--border);">
+            <div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:6px;">${title}</div>
+            <div style="font-size:13px;color:var(--slate);font-weight:300;line-height:1.6;">${desc}</div>
+          </div>`).join('')}
+        <div style="margin-top:28px;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:8px;">The no-baggage rule</div>
+          <p style="font-size:14px;color:var(--ink);font-weight:300;line-height:1.75;margin-bottom:8px;">If a monthly job doesn't get done this month, it simply becomes next month's job. No debt. No accumulation. No shame spiral. The cycle resets and you carry on.</p>
+          <p style="font-size:14px;color:var(--ink);font-weight:300;line-height:1.75;">You can always look back at what you've achieved. But Hearth never asks you to account for what you didn't do.</p>
+        </div>
+        <div style="margin-top:28px;">
+          <div style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:14px;">How it works</div>
+          ${[
+            ['📋','Dispatch','Your daily view. One job at a time, shown in priority order. Skip it, assign it, or tap done.'],
+            ['🎲','Roulette','Tell it how long you\'ve got and spin. Great for when you want to do something without having to think about what.'],
+            ['🏠','Rooms','Browse your whole home room by room. Useful when you want to tackle a space properly rather than one random job at a time.'],
+            ['💡','Step Change','One job, once a fortnight. Not a cleaning task — a short focused decision that quietly unblocks something. <em style="color:var(--ink);">"Decide where the ladders actually live"</em> takes ten minutes and means the storage room can finally be sorted. Small thinking that creates permanent change.'],
+            ['👥','Assigned','Delegate jobs to other household members, with a ready-to-send nudge if they need a reminder.'],
+          ].map(([icon,title,desc])=>`
+            <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;">
+              <div style="font-size:20px;flex-shrink:0;margin-top:2px;">${icon}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;">${title}</div><div style="font-size:12px;color:var(--slate);font-weight:300;line-height:1.6;">${desc}</div></div>
+            </div>`).join('')}
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:24px;">
+          <div style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--slate);margin-bottom:14px;">Getting started</div>
+          ${[
+            ['1','Set your why','Before the jobs and frequencies, take a moment. What do you want your home to feel like? Your answer stays quietly visible as a reminder of what you\'re doing this for.'],
+            ['2','Walk through your rooms','Hearth will suggest a job list for each room. Tick off anything that doesn\'t apply, add anything specific to yours. It takes about ten minutes and you only do it once.'],
+            ['3','Do one thing','Open Dispatch, see what\'s due, do it or skip it. Come back tomorrow. The system does the rest.'],
+          ].map(([n,title,desc])=>`
+            <div style="display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--rust);color:white;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">${n}</div>
+              <div><div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px;">${title}</div><div style="font-size:12px;color:var(--slate);font-weight:300;line-height:1.6;">${desc}</div></div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div style="padding:0 20px 20px;">
+        <button onclick="closeAbout()" style="width:100%;background:var(--rust);color:white;border:none;border-radius:var(--r2);padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;">Got it →</button>
+      </div>
+    </div>
+  `;
+}
+
+function closeAbout(){
+  document.getElementById('about-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+
 // toggleWizRoom kept for backward compat with any saved HTML that references it
 function toggleWizRoom(id){ wizRemoveInstance(id); }
 
@@ -3312,12 +3462,22 @@ window.wizNextRoom = wizNextRoom;
 window.wizRoomBack = wizRoomBack;
 window.wizConfirm = wizConfirm;
 window.wizToggleTemplate = wizToggleTemplate;
+window.wizAddRoomInstance = wizAddRoomInstance;
+window.wizRenameInstance = wizRenameInstance;
+window.wizRemoveInstance = wizRemoveInstance;
+window.wizShowInactive = wizShowInactive;
+// wizState must be on window so overlay onclick attributes can access it
+Object.defineProperty(window, 'wizState', { get(){ return wizState; }, set(v){ wizState=v; } });
+
 window.addAssignee = addAssignee;
 window.selectEditorJob = selectEditorJob;
 window.saveEditorJob = saveEditorJob;
 window.resetJobHistory = resetJobHistory;
 window.removeAssignee = removeAssignee;
 window.updateAssignee = updateAssignee;
+window.resetOverdue = resetOverdue;
+window.statPeriod = statPeriod;
+window.cyclePeriod = cyclePeriod;
 
 window.showTab = showTab;
 window.setTime = setTime;
@@ -3352,10 +3512,8 @@ window.setSubtaskType = setSubtaskType;
 window.saveSubtaskEdits = saveSubtaskEdits;
 window.addSubtask = addSubtask;
 window.deleteSubtask = deleteSubtask;
-window.wizAddRoomInstance = wizAddRoomInstance;
-window.wizRenameInstance = wizRenameInstance;
-window.wizRemoveInstance = wizRemoveInstance;
-window.wizShowInactive = wizShowInactive;
+window.showAbout = showAbout;
+window.closeAbout = closeAbout;
 
 boot();
 })();
