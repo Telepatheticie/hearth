@@ -1308,9 +1308,9 @@ async function sbLoad(userKey){
 }
 
 async function sbSave(userKey, stateObj){
-  await fetch(`${SUPABASE_URL}/rest/v1/hearth_state`, {
+  await fetch(`${SUPABASE_URL}/rest/v1/hearth_state?on_conflict=user_key`, {
     method: 'POST',
-    headers: SB_HEADERS,
+    headers: {...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates'},
     body: JSON.stringify({user_key: userKey, state: stateObj, updated_at: new Date().toISOString()})
   });
 }
@@ -1389,15 +1389,18 @@ async function confirmUserKey(){
     localStorage.setItem('hearth_user_key', raw);
     userKey = raw;
     if(existing){
+      // Returning user — load their cloud data
       state = existing;
       saveLocalState();
       showToast('Welcome back ✓');
     } else {
+      // New user — save empty state to cloud (don't use local state which may be stale)
+      state = {};
+      saveLocalState();
       await sbSave(raw, state);
       showToast('Account created ✓');
     }
     supabaseSynced = true;
-    // Remove overlay and render app
     const overlay = document.getElementById('key-setup-overlay');
     if(overlay) overlay.remove();
     initState();
@@ -1406,7 +1409,6 @@ async function confirmUserKey(){
     setSyncDot('synced');
     const keyDisplay = document.getElementById('account-key-display');
     if(keyDisplay) keyDisplay.textContent = userKey;
-    // Launch wizard for new users
     if(!state.wizardDone){
       setTimeout(()=>launchWizard(), 400);
     }
@@ -2505,22 +2507,25 @@ function resetJobHistory(id){
 }
 
 function reScatter(){
-  if(!confirm('This will reschedule jobs that are overdue or have never been done. Recently done jobs are untouched. Continue?')) return;
+  if(!confirm('This will spread out overdue and never-done jobs across their normal schedule. Jobs you\'ve genuinely done recently are untouched. Continue?')) return;
   const SCATTER_FREQS = {'daily':1,'2-3x week':3,'weekly':7,'fortnightly':14,'monthly':30,'quarterly':91,'annually':365,'seasonal':90};
   const SKIP_TIERS = new Set(['large','major','stepchange']);
   const SKIP_FREQS = new Set(['one-off','as needed']);
   let count = 0;
+  const now = today();
   Object.values(state.jobs).forEach(j=>{
     if(SKIP_TIERS.has(j.tier)) return;
     if(SKIP_FREQS.has(j.freq)) return;
     if(j.status==='assigned') return;
-    // Only touch jobs that are currently overdue or never done
-    if(j.last_done && !isDue(j)) return; // recently done — leave alone
-    const window = SCATTER_FREQS[j.freq];
-    if(!window) return;
-    const daysAgo = Math.floor(Math.random()*window);
+    // Only touch jobs that are overdue or never done — leave recently done jobs alone
+    if(j.last_done && !isDue(j)) return;
+    const freqWindow = SCATTER_FREQS[j.freq];
+    if(!freqWindow) return;
+    // Scatter into the past — between 1 day ago and (freqWindow - 1) days ago
+    // This means most won't be due yet, but some will naturally surface soon
+    const daysAgo = Math.floor(Math.random() * (freqWindow - 1)) + 1;
     const d = new Date();
-    d.setDate(d.getDate()-daysAgo);
+    d.setDate(d.getDate() - daysAgo);
     j.last_done = d.toISOString().split('T')[0];
     count++;
   });
@@ -2604,31 +2609,30 @@ async function boot(){
     return;
   }
 
-  // Show app immediately from local cache
-  initState();
-  renderDispatch();
-
-  // Show why statement on dispatch if set
-  if(state.whyStatement) renderWhyBar();
-
-  // Sync from Supabase in background
+  // Try cloud first — it's the source of truth
   try{
+    setSyncDot('syncing');
     const cloudState = await sbLoad(userKey);
     if(cloudState){
       state = cloudState;
       saveLocalState();
       supabaseSynced = true;
-      initState();
-      renderDispatch();
-      if(state.whyStatement) renderWhyBar();
     } else {
+      // New user on this key — save local state (probably empty) to cloud
       await sbSave(userKey, state);
       supabaseSynced = true;
     }
     setSyncDot('synced');
   } catch(e){
+    // Offline or error — fall back to local cache silently
     console.warn('Supabase sync failed, using local cache:', e);
+    setSyncDot('');
   }
+
+  // Now render with whatever state we have
+  initState();
+  renderDispatch();
+  if(state.whyStatement) renderWhyBar();
 
   // Launch wizard if never completed
   if(!state.wizardDone){
@@ -3543,6 +3547,10 @@ window.addSubtask = addSubtask;
 window.deleteSubtask = deleteSubtask;
 window.showAbout = showAbout;
 window.closeAbout = closeAbout;
+window.initState = initState;
+window.renderRooms = renderRooms;
+window.renderDispatch = renderDispatch;
+window.renderWhyBar = renderWhyBar;
 
 boot();
 })();
